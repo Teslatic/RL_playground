@@ -254,7 +254,7 @@ def run_episode(env,parameters,render=False):
 
 
 # choose amount of total runs for the parameter search
-RUNS = 1000
+RUNS = 100
 # set true for enabling rendered cartpole, default= False, WARNING: INCREASES RUNTIME!
 RENDER = False
 # set true to show successful parameters that are found in one successfull run
@@ -282,6 +282,9 @@ env = gym.make("CartPole-v0")
 
 rnd_search_obj = random_search()
 counter_rnd, good_param_rnd = rnd_search_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
+if TEST_PARAM:
+	best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
+
 
 ### show arbitrarily chosen parameter set from random search
 print("Show some arbitrarily chosen parameter performance from random search")
@@ -302,12 +305,13 @@ for _ in xrange(5):
 
 ### test parameters if flag is set
 if TEST_PARAM:
-	best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
 	best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
+
+
+
+if TEST_PARAM:
 	print("Best parameter sets found with random search:\n {}".format(best_set_rnd))
 	print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
-
-
 if SHOW_PLOTS:
 	plt.show()
 
