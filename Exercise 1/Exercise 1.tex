@@ -13,9 +13,10 @@
 %Header-Make sure you update this information!!!!
 \noindent
 \large\textbf{Reinforcement Learning} \hfill %\textbf{FirstName LastName} \\
-\normalsize Exercise 1 \hfill Team: Nico Ott, Lior, Hendrik Vloet \\
-\hfill Lab Date: \today \\
-\hfill Due Date: November 6, 2017
+\normalsize Exercise 0 \hfill 
+\\Team: Nico Ott 4214197, Lior Fuks 4251285, Hendrik Vloet 4324249 \\
+\hfill Date: \today \\
+\hfill Due Date: November 9, 2017
 \section*{1 Introduction to RL}
 \begin{itemize}
 	\item \textbf{Model}: A model is an agent's internal representation of the environment that predicts its behavior, i.e. forecasts the environment's evolution, regarding an action of the agent.\\
@@ -23,7 +24,7 @@
 	\begin{itemize}
 		\item State-Transition model $\mathcal{P}$. It predicts the next state of the agent after executing an action. Formalized:
 		\begin{flalign*}
-			\mathcal{P} _{SS'} = \mathbb{P}  \left\lbrace S_{t+1}   = s' | S_t =s, A_t = a    \right\rbrace \\
+			\mathcal{P}^a _{SS'} = \mathbb{P}  \left\lbrace S_{t+1}   = s' | S_t =s, A_t = a    \right\rbrace \\
 		\end{flalign*}
 		\item Reward model $\mathcal{R}^a _s$. It predicts the next expected (immediate) reward for the agent after performing some action, formalized:
 		\begin{flalign*}
@@ -49,8 +50,10 @@
     	\end{align*}
     \end{itemize}
     \vspace{0.5cm}
-    \item \textbf{Value-function}: predicts the future reward of the agent and is used to evaluate the goodness/badness of states, i.e. the value function can be used to pick actions, depending of the outcome. The value functions "unrolls" future possible rewards under some policy $\pi$:\\
-    $v_{\pi} ^{(s)} = \mathbb{E}_{\pi} \lbrace R_{t+1}+ \gamma R_{t+2} + \gamma ^2 R_{t+3}+... | S_t = s \rbrace$
+    \item \textbf{Value-function}: predicts the future reward of the agent and is used to evaluate the goodness/badness of states, i.e. the value function can be used to pick actions, depending of the outcome. The value functions "unrolls" future possible rewards under some policy $\pi$. Usually, the value function cannot predict the future with absolute certainty. Therefore, expected rewards of the future will have less influence on the value of the actual state("Myopic Evaluation"):\\
+    \begin{align*}
+    	v_{\pi} ^{(s)} = \mathbb{E}_{\pi} \lbrace R_{t+1}+ \gamma R_{t+2} + \gamma ^2 R_{t+3}+... | S_t = s \rbrace
+    \end{align*}
 \end{itemize}
 \clearpage
 

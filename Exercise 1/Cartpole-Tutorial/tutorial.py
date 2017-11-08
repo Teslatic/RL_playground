@@ -13,6 +13,9 @@ which serves to validate the found parameters
 
 Wheaton's law applies
 
+
+WARNING: USE PYTHON2 FOR THIS SCRIPT!
+
 08.11.2017 V1.0 inital version
 '''
 
@@ -86,7 +89,9 @@ class random_search(object):
 		plt.xlabel("Episodes needed")
 		plt.ylabel("ECDF")
 		plt.plot([nrun],[0.5],"o", c="black")
-		plt.annotate("50% of all successful training runs are\n successful after {} episodes".format(nrun), xy=(nrun,0.5), 						xytext=(nrun+(len(x)/100.0),0.6), arrowprops=dict(arrowstyle = "->" , facecolor="black"))
+		plt.annotate("50% of all successful training runs are\n successful after {} episodes".format(nrun), xy=(nrun,0.5), 
+						xytext=(nrun+(len(x)/100.0),0.6), 
+						arrowprops=dict(arrowstyle = "->" , facecolor="black"))
 		plt.margins(0.02)
 
 	def test_run(self,env, good_param, render = True, testruns=10):
@@ -252,7 +257,8 @@ def run_episode(env,parameters,render=False):
 #### STATICS ##########################################################################
 
 
-
+### all values are only for a short demonstration, you can play with them as much as
+### you want, but it can increase runtime drastically
 # choose amount of total runs for the parameter search
 RUNS = 100
 # set true for enabling rendered cartpole, default= False, WARNING: INCREASES RUNTIME!
@@ -266,7 +272,7 @@ SHOW_PARAMETERS = False
 NOISE_SCALING = 0.1
 
 # set amount of test runs for validating found averaged parameters
-TESTRUNS = 1000
+TESTRUNS = 100
 
 # show plots
 SHOW_PLOTS = True
@@ -314,12 +320,6 @@ if TEST_PARAM:
 	print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
 if SHOW_PLOTS:
 	plt.show()
-
-
-
-
-
-
 
 
 
