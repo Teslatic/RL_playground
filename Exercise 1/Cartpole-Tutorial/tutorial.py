@@ -303,7 +303,7 @@ for _ in xrange(5):
 ### test parameters if flag is set
 if TEST_PARAM:
 	best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
-	best_set_hc = hill_climbing_obj.test_run(env, good_param_rnd, False, TESTRUNS)
+	best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
 	print("Best parameter sets found with random search:\n {}".format(best_set_rnd))
 	print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
 
