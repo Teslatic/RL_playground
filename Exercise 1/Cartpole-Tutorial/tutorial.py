@@ -269,10 +269,10 @@ NOISE_SCALING = 0.1
 TESTRUNS = 1000
 
 # show plots
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 # look for the most successful parameters in random search and hill climbing
-TEST_PARAM = False
+TEST_PARAM = True
 
 #### MAIN #############################################################################
 
@@ -300,10 +300,10 @@ for _ in xrange(5):
 	reward = run_episode(env,good_param_hc[0], True)
 	print("Reward: {}".format(reward))
 
-
+### test parameters if flag is set
 if TEST_PARAM:
-	best_set_rnd = rnd_search_obj.test_run(env, good_param, False, TESTRUNS)
-	best_set_hc = hill_climbing_obj.test_run(env, good_param, False, TESTRUNS)
+	best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
+	best_set_hc = hill_climbing_obj.test_run(env, good_param_rnd, False, TESTRUNS)
 	print("Best parameter sets found with random search:\n {}".format(best_set_rnd))
 	print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
 
