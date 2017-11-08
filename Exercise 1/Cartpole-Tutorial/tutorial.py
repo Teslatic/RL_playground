@@ -8,8 +8,14 @@ RL like observations, rewards and policies.
 it with a small variety of parameters:
 	- Random Search
 	- Hill Climbing
+
 After  each parameter search, there is a small test run
 which serves to validate the found parameters
+
+
+Also the user can decide if he wants to run the full
+analysis of the policies stated above, or just a simple 
+demonstration of a randomized cartpole policy
 
 Wheaton's law applies
 
@@ -20,10 +26,6 @@ WARNING: USE PYTHON2 FOR THIS SCRIPT!
 '''
 
 
-
-import numpy as np
-import gym
-import matplotlib.pyplot as plt
 
 #### CLASSES ####
 
@@ -237,6 +239,8 @@ class hill_climbing(object):
 
 ### GLOBAL METHODS ###
 
+### basic method to run an episode of 200 timesteps
+
 def run_episode(env,parameters,render=False):
 	observation = env.reset()
 	total_reward = 0
@@ -252,13 +256,38 @@ def run_episode(env,parameters,render=False):
 		if done:
 			break
 
-	return total_reward
+	return total_reward,observation
+
+
+### a simple run for demonstrative purpose
+
+def simple_run(runs=20):
+	env = gym.make("CartPole-v0")
+	for _ in xrange(runs):
+		parameters = np.random.rand(4)*2-1
+		reward,observation = run_episode(env,parameters,True)
+		print("-----------------------------------------------------------------------")
+		print("Episode {}".format(_+1))
+		print("Reward: {}".format(reward))
+		print("Observations: {:.4f} {:.4f} {:.4f} {:.4f}".format(observation[0],
+				reward,observation[1], reward,observation[2], reward,observation[3]))
+		print("Used parameters: {}".format(parameters))
+		print("-----------------------------------------------------------------------")
+
+
 
 #### STATICS ##########################################################################
 
 
 ### all values are only for a short demonstration, you can play with them as much as
 ### you want, but it can increase runtime drastically
+
+### set this to true, to run the full random search and hill climbing analysis
+### if it is false, a simpler version of a random policy will execute
+POLICY_ANALYSIS = False
+
+
+
 # choose amount of total runs for the parameter search
 RUNS = 100
 # set true for enabling rendered cartpole, default= False, WARNING: INCREASES RUNTIME!
@@ -275,57 +304,58 @@ NOISE_SCALING = 0.1
 TESTRUNS = 100
 
 # show plots
-SHOW_PLOTS = True
+SHOW_PLOTS = False
 
 # look for the most successful parameters in random search and hill climbing
 TEST_PARAM = True
 
 #### MAIN #############################################################################
 
-env = gym.make("CartPole-v0")
+
+import numpy as np
+import gym
+import matplotlib.pyplot as plt
 
 
 
-rnd_search_obj = random_search()
-counter_rnd, good_param_rnd = rnd_search_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
-if TEST_PARAM:
-	best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
+if POLICY_ANALYSIS:
+	env = gym.make("CartPole-v0")
+	rnd_search_obj = random_search()
+	counter_rnd, good_param_rnd = rnd_search_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
+	if TEST_PARAM:
+		best_set_rnd = rnd_search_obj.test_run(env, good_param_rnd, False, TESTRUNS)
+
+	### show arbitrarily chosen parameter set from random search
+	print("Show some arbitrarily chosen parameter performance from random search")
+	for _ in xrange(5):
+		reward = run_episode(env,good_param_rnd[0], True)
+		print("Reward: {}".format(reward))
 
 
-### show arbitrarily chosen parameter set from random search
-print("Show some arbitrarily chosen parameter performance from random search")
-for _ in xrange(5):
-	reward = run_episode(env,good_param_rnd[0], True)
-	print("Reward: {}".format(reward))
+	hill_climbing_obj = hill_climbing()
+	counter_hc, good_param_hc = hill_climbing_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
 
 
-hill_climbing_obj = hill_climbing()
-counter_hc, good_param_hc = hill_climbing_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
+	### show arbitrarily chosen parameter set from random search
+	print("Show some arbitrarily chosen parameter performance from hill climbing")
+	for _ in xrange(5):
+		reward = run_episode(env,good_param_hc[0], True)
+		print("Reward: {}".format(reward))
 
-
-### show arbitrarily chosen parameter set from random search
-print("Show some arbitrarily chosen parameter performance from hill climbing")
-for _ in xrange(5):
-	reward = run_episode(env,good_param_hc[0], True)
-	print("Reward: {}".format(reward))
-
-### test parameters if flag is set
-if TEST_PARAM:
-	best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
-
-
-
-if TEST_PARAM:
-	print("Best parameter sets found with random search:\n {}".format(best_set_rnd))
-	print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
-if SHOW_PLOTS:
-	plt.show()
+	### test parameters if flag is set
+	if TEST_PARAM:
+		best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
 
 
 
-
-
-
+	if TEST_PARAM:
+		print("Best parameter sets found with random search:\n {}".format(best_set_rnd))
+		print("Best parameter sets found with hill climbing:\n {}".format(best_set_hc))
+	if SHOW_PLOTS:
+		plt.show()
+else:
+	simple_run()
+	
 
 
 
