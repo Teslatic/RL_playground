@@ -241,7 +241,7 @@ class hill_climbing(object):
 
 ### basic method to run an episode of 200 timesteps
 
-def run_episode(env,parameters,render=False):
+def run_episode(env,parameters,render=False,ep=None):
 	observation = env.reset()
 	total_reward = 0
 	for timesteps in xrange(200):
@@ -253,28 +253,41 @@ def run_episode(env,parameters,render=False):
 			action=1
 		observation, reward, done, info = env.step(action)
 		total_reward += reward
+		if POLICY_ANALYSIS == False:
+			print("--------------------------------------------------------------------")
+			print("Current Episode: {}".format(ep+1))
+			print("Timestep {}".format(timesteps))
+			print("Observations: {}".format(observation))
+			print("Reward: {}".format(total_reward))
+			print("--------------------------------------------------------------------")
 		if done:
 			break
-	if(POLICY_ANALYSIS==False):
-		return total_reward, observation
-	else:
-		return total_reward
+	
+	return total_reward
 
 ### a simple run for demonstrative purpose
 
 def simple_run(runs=20):
+	list_reward = []
 	env = gym.make("CartPole-v0")
 	for _ in xrange(runs):
+		#print("-----------------------------------------------------------------------")
+		#print("Episode {}".format(_+1))
 		parameters = np.random.rand(4)*2-1
-		reward,observation = run_episode(env,parameters,True)
-		print("-----------------------------------------------------------------------")
-		print("Episode {}".format(_+1))
-		print("Reward: {}".format(reward))
-		print("Observations: {:.4f} {:.4f} {:.4f} {:.4f}".format(observation[0],
-				reward,observation[1], reward,observation[2], reward,observation[3]))
+		reward = run_episode(env,parameters,True,_)
+		list_reward.append(reward)		
+		print("Total achieved Reward in episode {}: {}".format(_+1,reward))
+		
+		#print("Observations: {:.4f} {:.4f} {:.4f} {:.4f}".format(observation[0],
+		#		reward,observation[1], reward,observation[2], reward,observation[3]))
 		print("Used parameters: {}".format(parameters))
 		print("-----------------------------------------------------------------------")
-
+	plt.figure()
+	plt.plot(np.arange(1,runs+1),list_reward)
+	plt.title("Total reward for each episode with random search")
+	plt.xlabel("Episode")
+	plt.ylabel("Total Reward")
+	plt.show()
 
 
 #### USER INTERFACE####################################################################
