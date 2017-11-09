@@ -5,8 +5,11 @@
 \usepackage{amsmath,amsfonts,amsthm} % Math packages
 \usepackage{graphicx}
 \usepackage{enumitem}
+\usepackage{media9}
 \setlist{nolistsep}
 \usepackage{geometry}
+\usepackage{listings}
+
 \geometry{bottom=15mm}
 
 \begin{document}
@@ -17,7 +20,7 @@
 \\Team: Nico Ott 4214197, Lior Fuks 4251285, Hendrik Vloet 4324249 \\
 \hfill Date: \today \\
 \hfill Due Date: November 9, 2017
-\section*{1 Introduction to RL}
+\section{Introduction to RL}
 \begin{itemize}
 	\item \textbf{Model}: A model is an agent's internal representation of the environment that predicts its behavior, i.e. forecasts the environment's evolution, regarding an action of the agent.\\
 	 A model may help a policy to find the best next action and it consists of 2 components:
@@ -58,8 +61,63 @@
 \clearpage
 
 
-\section*{2 GYM}
+\section{GYM}
 
-\lipsum[1]
+The main objective of this task was, to get familiar with the GYM environment, provided by openAI. \\
+We decided to try different approaches in order to increase familiarity with GYM. As a result of these approaches we came up with two basic ideas:
+
+\begin{enumerate}
+	\item A simple demonstration of how the cartpole will behave under a \textbf{random} policy.
+	\item A more detailed analysis of two different policies:
+	\begin{itemize}
+		\item Random Search
+		\item Hill Climbing
+	\end{itemize}
+\end{enumerate}
+
+
+\subsection{Setup}
+
+\begin{itemize}
+	\item filename: main.py
+	\item ONLY WORKS WITH PYTHON2
+	\item Depending on the configurations in the user interface, the execution can take a while. A configuration with 1000 RUNS and 1000 TESTRUNS and the POLICY\_ANALYSIS,SHOW\_PARAMETER, SHOW\_PLOTS, TEST\_PARAM flags set to true took approx. 10-15 minutes (results are shown in figure \ref{fig:plots}).
+\end{itemize}
+
+\subsection{User Interface}
+
+
+The program is completely controllable by a few parameters and flags. The default values have been set to show a short demonstration but we encourage you to play with the\\
+ POLICY\_ANALYSIS flag! The other parameters have following functions (refer also to figure \ref{fig:interface}):
+\begin{itemize}
+	\item POLICY\_ANALYSIS
+	\begin{itemize}
+		\item True: enable the full analysis program, i.e. performing a random search and hill climbing (Warning: Increases runtime)
+		\item False: disable full analysis and just show a short demo with a randomized policy within the cartpole environment
+	\end{itemize}
+	\item RUNS: set the total amount of runs that are used in the different parameter searches. Increasing it beyond the default(100) may increase runtime drastically
+	\item RENDER: if set true, all episodes of any cartpole interaction is rendered and thus displayed. (Warning: Can increase runtime drastically!)
+	\item SHOW\_PARAMETERS: if true, the program will display several additional information about used weights, rewards, observations etc. (Warning: activating it, may result in a blown up output display)
+	\item NOISE\_SCALING: affects the Hill Climbing search, which uses noise injection in order to escape local minima. The higher it is, the more the Hill Climbing behaves like pure Random Search
+	\item TESTRUNS: sets the amount of testruns, hat will be used to find the best parameter pairs, that have been found by Random Search and Hill Climbing
+	\item SHOW\_PLOTS: if set true, several plots will show up in the end, regarding some statistics of the Random Search and the Hill Climbing (Histogram, ECDF, Success-Rate, see figure \ref{fig:plots})
+	\item TEST\_PARAM: in case POLICY\_ANALYSIS and TESTRUNS is set to true, the program will try to find the best parameter pairs, which have been found by Random Search and Hill Climbing
+\end{itemize}
+
+\begin{figure}[hbpt!]
+ \centering
+ \includegraphics[width=0.8\textwidth]{interface}
+ \caption{Screenshot of the user configuration part of the program}
+ \label{fig:interface}
+\end{figure}
+
+\begin{figure}[hbpt!]
+	\centering
+	\includegraphics[width=\textwidth, height=0.75\textwidth]{1000_runs}
+	\caption{Plotting results of a detailed policy analysis.}
+	\label{fig:plots}
+\end{figure}
+
+
 
 \end{document}

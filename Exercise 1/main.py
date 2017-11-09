@@ -164,8 +164,8 @@ class hill_climbing(object):
 							print("Episodes needed: {:4d}".format(counter))
 							print("Best reward: {}".format(reward))
 							print("Used parameters: {:.4f} {:.4f} {:.4f} {:.4f}"
-										.format(best_params[0] ,best_params[1]
-										,best_params[2],best_params[3]))
+										.format(parameters[0] ,parameters[1]
+										,parameters[2],parameters[3]))
 						break
 		#avg_params = np.mean(good_param,axis=0)
 		self.plot_histogram(results)
@@ -255,9 +255,10 @@ def run_episode(env,parameters,render=False):
 		total_reward += reward
 		if done:
 			break
-
-	return total_reward,observation
-
+	if(POLICY_ANALYSIS==False):
+		return total_reward, observation
+	else:
+		return total_reward
 
 ### a simple run for demonstrative purpose
 
@@ -276,14 +277,14 @@ def simple_run(runs=20):
 
 
 
-#### STATICS ##########################################################################
+#### USER INTERFACE####################################################################
 
 
 ### all values are only for a short demonstration, you can play with them as much as
-### you want, but it can increase runtime drastically
+### you want, but it can increase runtime.
 
 ### set this to true, to run the full random search and hill climbing analysis
-### if it is false, a simpler version of a random policy will execute
+### if it is false, a simpler version of a random policy will be executed
 POLICY_ANALYSIS = False
 
 
@@ -295,7 +296,6 @@ RENDER = False
 # set true to show successful parameters that are found in one successfull run
 # default = False
 SHOW_PARAMETERS = False
-
 # set noise scaling for noise injection in hill climbing
 # a high noise scaling results in similar performance as random search!
 NOISE_SCALING = 0.1
@@ -304,7 +304,7 @@ NOISE_SCALING = 0.1
 TESTRUNS = 100
 
 # show plots
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 # look for the most successful parameters in random search and hill climbing
 TEST_PARAM = True
@@ -335,17 +335,18 @@ if POLICY_ANALYSIS:
 	hill_climbing_obj = hill_climbing()
 	counter_hc, good_param_hc = hill_climbing_obj.train(RUNS,RENDER,SHOW_PARAMETERS);
 
-
+	### test parameters if flag is set
+	if TEST_PARAM:
+		best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
+	
+	
 	### show arbitrarily chosen parameter set from random search
 	print("Show some arbitrarily chosen parameter performance from hill climbing")
 	for _ in xrange(5):
 		reward = run_episode(env,good_param_hc[0], True)
 		print("Reward: {}".format(reward))
 
-	### test parameters if flag is set
-	if TEST_PARAM:
-		best_set_hc = hill_climbing_obj.test_run(env, good_param_hc, False, TESTRUNS)
-
+	
 
 
 	if TEST_PARAM:
@@ -356,7 +357,6 @@ if POLICY_ANALYSIS:
 else:
 	simple_run()
 	
-
 
 
 
