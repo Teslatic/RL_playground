@@ -256,7 +256,7 @@ def run_episode(env,parameters,render=False,ep=None):
 		if POLICY_ANALYSIS == False:
 			print("--------------------------------------------------------------------")
 			print("Current Episode: {}".format(ep+1))
-			print("Timestep {}".format(timesteps))
+			print("Timestep {}".format(timesteps+1))
 			print("Observations: {}".format(observation))
 			print("Reward: {}".format(total_reward))
 			print("--------------------------------------------------------------------")
