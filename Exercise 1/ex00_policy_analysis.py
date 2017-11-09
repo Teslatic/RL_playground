@@ -15,7 +15,8 @@ which serves to validate the found parameters
 
 Also the user can decide if he wants to run the full
 analysis of the policies stated above, or just a simple 
-demonstration of a randomized cartpole policy
+demonstration of a randomized cartpole policy, where the actions
+are chosen depending on parameters that are chosen randomly
 
 Wheaton's law applies
 
@@ -46,8 +47,12 @@ class random_search(object):
 			counter = 0
 			for episode in xrange(10000):
 				counter += 1
+				# draw random parameters 
 				parameters = np.random.rand(4)*2-1
+				# run one episode with 200 timesteps
 				reward = run_episode(env,parameters,render)
+				# if the reward is better than the best reward reached
+				# so far, update parameters
 				if reward > best_reward:
 					best_reward = reward
 					best_params = parameters
@@ -62,13 +67,14 @@ class random_search(object):
 									,best_params[2],best_params[3]))
 						break
 		#print(len(good_param))
-		#avg_params = np.mean(good_param,axis=0)	
+		#avg_params = np.mean(good_param,axis=0)
+		# call plotting functions	
 		self.plot_histogram(results)
 		self.plot_ecdf(results)
 		
 		return counter, good_param	
 
-		
+	# plots a histogram of the successful runs	
 	def plot_histogram(self,data):
 		plt.figure()
 		plt.hist(data, bins=200,normed=True,color="black")
@@ -79,7 +85,7 @@ class random_search(object):
 		print("Amount of successful Runs: {}".format(len(data)))
 		print("Average Episodes needed to reach 200: {}".format(np.mean(data)))
 		
-
+	# plots an empirical cumulative distribution function of all successful runs
 	def plot_ecdf(self,results):
 		plt.figure()
 		x = np.sort(results)
@@ -154,6 +160,7 @@ class hill_climbing(object):
 				# noise injection
 				new_params = parameters + (np.random.rand(4)*2-1)*NOISE_SCALING
 				reward = run_episode(env,new_params,render)
+				# update parameters if reward is better than best reward found so far				
 				if reward > best_reward:
 					best_reward = reward
 					parameters = new_params
@@ -266,28 +273,33 @@ def run_episode(env,parameters,render=False,ep=None):
 	return total_reward
 
 ### a simple run for demonstrative purpose
-
+### for every run, a random parameter set is drawn and applied on the cartpole environment
+### this is just an application of a pure random policy and does not inclued any learning
 def simple_run(runs=20):
 	list_reward = []
 	env = gym.make("CartPole-v0")
 	for _ in xrange(runs):
 		#print("-----------------------------------------------------------------------")
 		#print("Episode {}".format(_+1))
+		# draw random parameters
 		parameters = np.random.rand(4)*2-1
+		# run episode
 		reward = run_episode(env,parameters,True,_)
 		list_reward.append(reward)		
 		print("Total achieved Reward in episode {}: {}".format(_+1,reward))
-		
 		#print("Observations: {:.4f} {:.4f} {:.4f} {:.4f}".format(observation[0],
 		#		reward,observation[1], reward,observation[2], reward,observation[3]))
 		print("Used parameters: {}".format(parameters))
 		print("-----------------------------------------------------------------------")
 	plt.figure()
 	plt.plot(np.arange(1,runs+1),list_reward)
-	plt.title("Total reward for each episode with random search")
+	plt.bar(np.arange(1,runs+1),list_reward)
+	plt.plot(np.arange(1,runs+1),list_reward)
+	plt.title("Total reward for each episode with randomized actions")
 	plt.xlabel("Episode")
 	plt.ylabel("Total Reward")
 	plt.show()
+
 
 
 #### USER INTERFACE####################################################################
@@ -340,6 +352,7 @@ if POLICY_ANALYSIS:
 
 	### show arbitrarily chosen parameter set from random search
 	print("Show some arbitrarily chosen parameter performance from random search")
+	print("Used parameters: {}".format(good_param_rnd[0]))
 	for _ in xrange(5):
 		reward = run_episode(env,good_param_rnd[0], True)
 		print("Reward: {}".format(reward))
@@ -355,6 +368,7 @@ if POLICY_ANALYSIS:
 	
 	### show arbitrarily chosen parameter set from random search
 	print("Show some arbitrarily chosen parameter performance from hill climbing")
+	print("Used parameters: {}".format(good_param_hc[0]))
 	for _ in xrange(5):
 		reward = run_episode(env,good_param_hc[0], True)
 		print("Reward: {}".format(reward))

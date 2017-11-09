@@ -61,11 +61,37 @@
 \clearpage
 
 
-\section{GYM}
+\section{GYM: 2 Versions}
 
-The main objective of this task was, to get familiar with the GYM environment, provided by openAI. \\
-We decided to try different approaches in order to increase familiarity with GYM. As a result of these approaches we came up with two basic ideas:
 
+We decided to design two different codings. We will describe both versions in the following.
+
+\subsection{Version 1: Explore and Exploit}
+
+\textbf{File name:} ex00\_explore\_exploit.py\\
+This program consists of two parts:
+\begin{itemize}
+	\item Exploration: Finding a good parameter set with random search
+	\item Exploitation: Using the found parameter set on a few episodes to check the parameter set
+\end{itemize}
+
+\paragraph{Exploration}
+
+In every episode, a random weight vector is created and used until the cartpole fails or reaches a total reward of 200. (200 is the maximum possible step number, after that the done flag is set and the task is considered solved) It also saves the weight parameter set which performed best but finally returns the first parameter set which reaches a total reward of 200.
+Usually, the random search finds a suited parameter set within the first 20-30 episodes.
+
+\paragraph{Exploitation}
+
+The found parameter set is then used again for a linear combination on 5 episodes just to see if the greedily found parameter set performs well on other starting points.
+Sometimes the found parameter set will do great for all runs, sometimes it won’t solve the task in a single run.
+
+This program was kept as simple as possible to show the basic idea of the exploration \& exploitation policy.
+\clearpage
+
+\subsection{Version 2: Random Search and Hill Climbing}
+
+The second version uses a somewhat more detailed approach but also works with linear combinations of some weighting parameters and the observations in order to determine the next action of the agent. To estimate good parameters, the program performs a random search or hill climbing.\\
+The program is also able to work in a simpler mode, similar to Version 1 but is no real learning program, since it just applies randomly chosen parameters to the cartpole environment. Briefly, the program consists of the following mechanics:
 \begin{enumerate}
 	\item A simple demonstration of how the cartpole will behave under a \textbf{random} policy.
 	\item A more detailed analysis of two different policies:
@@ -76,10 +102,10 @@ We decided to try different approaches in order to increase familiarity with GYM
 \end{enumerate}
 
 
-\subsection{Setup}
+\subsubsection{Setup}
 
 \begin{itemize}
-	\item filename: main.py
+	\item \textbf{filename}: ex00\_policy\_analysis.py
 	\item ONLY WORKS WITH PYTHON2
 	\item Depending on the configurations in the user interface, the execution can take a while. A configuration with 1000 RUNS and 1000 TESTRUNS and the POLICY\_ANALYSIS,SHOW\_PARAMETER, SHOW\_PLOTS, TEST\_PARAM flags set to true took approx. 10-15 minutes (results are shown in figure \ref{fig:plots}).
 \end{itemize}
@@ -117,6 +143,11 @@ The program is completely controllable by a few parameters and flags. The defaul
 	\caption{Plotting results of a detailed policy analysis.}
 	\label{fig:plots}
 \end{figure}
+
+
+
+
+
 
 
 
