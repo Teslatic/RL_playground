@@ -64,7 +64,7 @@
 \section{GYM: 2 Versions}
 
 
-We decided to design two different codings. We will describe both versions in the following.
+We decided to design two different codings. We will describe both versions in the following. We highly encourage you to try both versions. Both should fulfill the given task description.
 
 \subsection{Version 1: Explore and Exploit}
 
@@ -113,13 +113,14 @@ The program is also able to work in a simpler mode, similar to Version 1 but is 
 \subsection{User Interface}
 
 
-The program is completely controllable by a few parameters and flags. The default values have been set to show a short demonstration but we encourage you to play with the\\
- POLICY\_ANALYSIS flag! The other parameters have following functions (refer also to figure \ref{fig:interface}):
+The program is completely controllable by a few parameters and flags. The default values have been set to show a short demonstration.\\
+BUT WE ENCOURAGE YOU TO PLAY WITH THE POLICY\_ANALYSIS FLAG!\\
+The other parameters have following functions (refer also to figure \ref{fig:interface}):
 \begin{itemize}
 	\item POLICY\_ANALYSIS
 	\begin{itemize}
-		\item True: enable the full analysis program, i.e. performing a random search and hill climbing (Warning: Increases runtime)
-		\item False: disable full analysis and just show a short demo with a randomized policy within the cartpole environment
+		\item \textbf{True}: enable the full analysis program, i.e. performing a random search and hill climbing (Warning: Increases runtime)
+		\item \textbf{False}: disable full analysis and just show a short demo with a randomized policy within the cartpole environment
 	\end{itemize}
 	\item RUNS: set the total amount of runs that are used in the different parameter searches. Increasing it beyond the default(100) may increase runtime drastically
 	\item RENDER: if set true, all episodes of any cartpole interaction is rendered and thus displayed. (Warning: Can increase runtime drastically!)
