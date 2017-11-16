@@ -1,0 +1,34 @@
+Nico:
+
+Exercise 1 (13+3 hours):
+- Bellman part quite easy. Just use the formula.
+- MDP/MRP task was good for understanding.
+- In general, the exercise sheet conception is excellent.
+- Problem formulation for the MDP/MRP part was somtimes confusing. Especially Task 1c).
+
+Lecture 2 (4 hours):
+- Really had to look up the mathematical definitions to be absolute clear what David meant.
+
+Meeting (1.5 hours):
+- More time should be used on the exercises.
+
+General
+- Flipped classroom concept works out nicely.
+- Splitting tasks between teachers benefits a lot.
+- Kahoot is cool, but takes a lot of time. Somehow you are forced to answer with time pressure which is a good exercise
+
+
+
+Hendrik:
+
+Exercise 1 (12+8 hours):
+- Task1: subtasks a) and b) were good to understand and pretty much straightforward but I did not manage to solve c) and the following subtasks on my own.
+- Task 2: good and well-structured task
+- 1c) was very confusing for me with the path cost expression and I did not know, what value is wanted here
+
+Lecture 2 (3 hours):
+
+
+Meeting (1.5 hours):
+
+General:
