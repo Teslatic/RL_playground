@@ -18,8 +18,9 @@
 %	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 
-\documentclass[paper=a4, fontsize=11pt]{scrartcl} % A4 paper and 11pt font size
-
+\documentclass[paper=a4, fontsize=10pt]{scrartcl} % A4 paper and 11pt font size
+\usepackage{geometry}
+\geometry{margin=2cm}
 \usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
 \usepackage{fourier} % Use the Adobe Utopia font for the document - comment this line to return to the LaTeX default
 \usepackage[english]{babel} % English language/hyphenation
@@ -33,7 +34,7 @@
 
 \usepackage{sectsty} % Allows customizing section commands
 %\allsectionsfont{\centering \normalfont\scshape} % Make all sections centered, the default font and small caps
-
+\geometry{left=1cm}
 \usepackage{fancyhdr} % Custom headers and footers
 \pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
 \fancyhead{} % No page header - if you want one, create it in the same way as the footers below
@@ -83,13 +84,18 @@
 \subsection*{a)}
 - See according code file \textbf{value\_iteration.py}
 \subsection*{b)}
-
 \begin{itemize}
-	\item \textbf{Policy Iteration:}\\
-	
-	\item \textbf{Value Iteration:}\\
-\end{itemize}
 
+\item The policy iteration algorithm consists of two explicit components, the policy evaluation and the policy improvement step. These two steps are looped until convergence is achieved:\\
+$ \pi_0 \xrightarrow{\text{eval}} v_{\pi_0} \xrightarrow{\text{improve}} \pi_1 \xrightarrow{\text{eval}} ... \xrightarrow{\text{improve}} \pi_* \xrightarrow{\text{eval}} v_* $ \\
+Value iteration does not use an explicit policy evaluation step: $v_1 \rightarrow v_2 \rightarrow ...  \rightarrow v_*$.\\
+ After convergence to $v_*$ the optimal policy $\pi_*$ is instantly known.
+In praxis, convergence is obtained by check the difference of the two latest value functions. If it does only change for a small amount ($\sim$ 0.0001). 
+\item One drawback of policy iteration is, that it can be computationally inefficient because we have to wait until it converges and the algorithm only does that in its limits (obviously). Value iteration converges much faster due to the lack of an explicit policy evaluation.
+
+\item value iteration uses the Bellman optimality equation in order to update their value function and policy iteration uses the bellman expectation equation and then greedily improves its policy. 
+\item Similarity: value iteration is equivalent to policy iteration if policy iteration is terminated after one complete sweep of all states.\\
+\end{itemize}
 \clearpage
 \section{Experiences}
 \begin{itemize}
@@ -98,7 +104,7 @@
 		\item Invested time:
 		\begin{itemize}
 			\item Lecture 3: 3h
-			\item Exercise : ~24h
+			\item Exercise : $\sim$ 24h
 		\end{itemize}
 		\item understanding issues with the unittest structure of the python environment
 		\item I had trouble with comprehending why the expected policy always had only one possible action per state. In my understanding there should be at least in the corner states of the gridworld, where the agent's distance to one target state is equivalent be more than one viable action
