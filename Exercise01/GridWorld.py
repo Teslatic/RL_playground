@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #######################################################################
 # Copyright (C)                                                       #
 # 2016 Shangtong Zhang(zhangshangtong.cpp@gmail.com)                  #
@@ -6,9 +8,10 @@
 # declaration at the top                                              #
 #######################################################################
 
+
 from __future__ import print_function
 import numpy as np
-
+import time
 WORLD_SIZE = 5
 A_POS = [0, 1]
 A_PRIME_POS = [4, 1]
@@ -74,12 +77,13 @@ for i in range(0, WORLD_SIZE):
 
         nextState[i].append(next)
         actionReward[i].append(reward)
-print(nextState[0][0])
-print(actionReward[0][0])
-
+#print(nextState[0][0])
+#print(actionReward[0][0])
+cnt = 0
 # for figure 3.5
 while True:
     # keep iteration until convergence
+    print(cnt,world)
     newWorld = np.zeros((WORLD_SIZE, WORLD_SIZE))
     for i in range(0, WORLD_SIZE):
         for j in range(0, WORLD_SIZE):
@@ -87,6 +91,11 @@ while True:
                 newPosition = nextState[i][j][action]
                 # bellman equation
                 newWorld[i, j] += actionProb[i][j][action] * (actionReward[i][j][action] + discount * world[newPosition[0], newPosition[1]])
+    world = newWorld
+    
+    cnt =+ cnt
+    time.sleep(1)
+'''
     if np.sum(np.abs(world - newWorld)) < 1e-4:
         print('Random Policy')
         print(newWorld)
@@ -116,3 +125,4 @@ while True:
         break
     world = newWorld
 
+'''
