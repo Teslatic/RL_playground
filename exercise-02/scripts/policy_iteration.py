@@ -29,7 +29,7 @@ def policy_eval(policy, env, discount_factor=1.0, theta=0.00001):
 		for state in range(env.nS):
 			# loop over all actions
 			for action in actions:
-				# inline Bellmann expectation equation
+				# Bellmann Expectation Equation
 				v_new[state] += policy[state][action]*(env.P[state][action][0][0]
 									*env.P[state][action][0][2] + discount_factor
 									*V[env.P[state][action][0][1]])

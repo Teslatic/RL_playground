@@ -36,7 +36,7 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
 			values = []
 			# loop over all actions
 			for action in actions:
-				# generate a list of values for state s (Bellmann)
+				# generate a list of values for state s (Bellmann Optimality Equation)
 				values.append(env.P[state][action][0][0]*(env.P[state][action][0][2]+
 											  discount_factor*V[env.P[state][action][0][1]]))
 			# pick greedily the highest value for the new value
@@ -57,7 +57,8 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
 			# generate a list of values for state s (Bellmann)
 			values.append(env.P[state][action][0][0]*(env.P[state][action][0][2]+
 											  discount_factor*V[env.P[state][action][0][1]]))
-		# reset policy in state s to zero, because we are acting greedy. The best value function, i.e. largest, is chosen. If the found value is not unique for this state, the first value and the according action is preferred (greedy)
+		# reset policy in state s to zero, because we are acting greedy. The best value function, i.e. largest, is chosen.
+		# If the found value is not unique for this state, the first value and the according action is preferred (greedy)
 		policy[state] = 0
 		policy[state][np.argmax(values)] = 1
 		
