@@ -40,6 +40,7 @@ class TestIterationAlgorithm:
                        [0., 1., 0., 0.],
                        [0., 1., 0., 0.],
                        [1., 0., 0., 0.]]
+    
     np.testing.assert_array_equal(self.policy, expected_policy)
     
   def test_value(self):
