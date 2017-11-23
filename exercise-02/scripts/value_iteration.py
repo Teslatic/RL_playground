@@ -1,7 +1,4 @@
 import numpy as np
-import time
-
-
 
 def value_iteration(env, theta=0.0001, discount_factor=1.0):
 	"""
@@ -37,7 +34,7 @@ def value_iteration(env, theta=0.0001, discount_factor=1.0):
 			# loop over all actions
 			for action in actions:
 				# generate a list of values for state s (Bellmann Optimality Equation)
-				values.append(env.P[state][action][0][0]*(env.P[state][action][0][2]+y  discount_factor*V[env.P[state][action][0][1]]))
+				values.append(env.P[state][action][0][0]*(env.P[state][action][0][2]+discount_factor*V[env.P[state][action][0][1]]))
 			# pick greedily the highest value for the new value
 			new_value = np.max(values)
 			# calculate the delta, which we compare to the parameter theta in order to execute an epsilon convergence
