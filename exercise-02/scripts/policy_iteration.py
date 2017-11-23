@@ -1,5 +1,4 @@
 import numpy as np
-import time
 def policy_eval(policy, env, discount_factor=1.0, theta=0.00001):
 	"""
 	Evaluate a policy given an environment and a full description of the environment's dynamics.
