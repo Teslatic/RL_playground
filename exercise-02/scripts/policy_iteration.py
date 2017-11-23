@@ -85,8 +85,9 @@ def policy_improvement(env, policy_eval_fn=policy_eval, discount_factor=1.0):
 				# generate a list of values for state s
 				values.append(env.P[state][action][0][0]*(env.P[state][action][0][2]+discount_factor*
 												V[env.P[state][action][0][1]]))
-				# reset policy in state s to zero, because we are acting greedy. The best value function, i.e. largest, is chosen. If the found value is not unique for this state, the first value and the according action is preferred (greedy)
+				# reset current state policy to zero
 				policy[state] = 0
+				# apply argmax in order to get a deterministic policy (for any MDP there exists a deterministic policy that is optimal)
 				policy[state][np.argmax(values)] = 1
 		# if the old policy and current policy are equal, than according to the policy improvement theorem, the found policy is as good as or better than the old policy -> break the loop
 		if np.array_equal(policy,old_policy):
