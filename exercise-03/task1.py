@@ -15,28 +15,30 @@ r =[-1,   -1,     -1,     -1,     -1,
     -1,   -1,     -1,     -1,     10,
     -100, -100,   -100,   -100, -100]
 
-episodes = [[5,6,7,2,3,4,9],[5,6,7,12], [5,6,7,8,3,8,9]]
+episodes = [[5,6,7,2,3,4],[5,6,7], [5,6,7,8,3,8]] #terminal states omitted
+v_next_ep = [dict({5:6,6:7,7:2,2:3,3:4,4:9}),
+             dict({5:6,6:7,7:12}),
+             dict({5:6,6:7,7:8,8:3,3:8})]
+             
 
 ep_4 = [5,0,1,2,3,4]
-v_next = dict()
-v_next = {5:0,0:1,1:2,2:3,3:4,4:9}
+v_next = dict({5:0,0:1,1:2,2:3,3:4,4:9})
 
 alpha = [1,1/2,1/3]
 
 
 for ep in range(0,3):
-    history = episodes[ep]
-    #print(history)
     list_rewards = []
     rewards_in_ep = []
     total_return = []
     for idx,val in enumerate(episodes[ep]):
-        rewards_in_ep.append(r[val])
+        #print(v_next_ep[ep][val])
+        rewards_in_ep.append(r[v_next_ep[ep][val]])
         #print(rewards_in_ep)
     #print(rewards_in_ep)
     for idx,val in enumerate(episodes[ep]):
         total_return.append(sum(rewards_in_ep,idx))
-    #print("Total return in episode {}: \n{}".format(ep,total_return))
+    print("Total return in episode {}: \n{}".format(ep+1,total_return))
     visit = [False]*15
     for idx,val in enumerate(episodes[ep]):
         #print(visit[val])
@@ -45,9 +47,9 @@ for ep in range(0,3):
             visit[val] = True
     print("Values after episode {}".format(ep+1))
     print("|---------------------------------------|")
-    print("| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[0],V[1],V[2],V[3],V[4]))
+    print("| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}  |".format(V[0],V[1],V[2],V[3],V[4]))
     print("|---------------------------------------|")
-    print("| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}  |".format(V[5],V[6],V[7],V[8],V[9]))
+    print("| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[5],V[6],V[7],V[8],V[9]))
     print("|---------------------------------------|")
     print("| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[10],V[11],V[12],V[13],V[14]))
     print("|---------------------------------------|")       
@@ -59,10 +61,10 @@ for idx,step in enumerate(ep_4):
         
 print("Temporal Difference Error in episode 4")
 print("|-----------------------------------------------|")
-print("| V_3 \t {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[0],V[1],V[2],V[3],V[4]))
-print("| error {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(delta[0],delta[1],delta[2],delta[3],delta[4]))
+print("| V_3 \t {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}  |".format(V[0],V[1],V[2],V[3],V[4]))
+print("| error {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f} |".format(delta[0],delta[1],delta[2],delta[3],delta[4]))
 print("|-----------------------------------------------|")
-print("| V_3\t{:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}  |".format(V[5],V[6],V[7],V[8],V[9]))
+print("| V_3\t{:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[5],V[6],V[7],V[8],V[9]))
 print("| error  {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(delta[5],delta[6],delta[7],delta[8],delta[9]))
 print("|-----------------------------------------------|")
 print("| V_3 \t {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}\t| {:.1f}   |".format(V[10],V[11],V[12],V[13],V[14]))
