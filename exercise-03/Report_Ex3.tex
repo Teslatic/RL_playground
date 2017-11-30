@@ -1,0 +1,169 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Short Sectioned Assignment
+% LaTeX Template
+% Version 1.0 (5/5/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Frits Wenneker (http://www.howtotex.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[paper=a4, fontsize=10pt]{scrartcl} % A4 paper and 11pt font size
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+%\usepackage{fourier} % Use the Adobe Utopia font for the document - comment this line to return to the LaTeX default
+\usepackage[english]{babel} % English language/hyphenation
+\usepackage[utf8]{inputenc} 
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{graphicx}
+
+\usepackage{sectsty} % Allows customizing section commands
+%\allsectionsfont{\centering \normalfont\scshape} % Make all sections centered, the default font and small caps
+\geometry{left=1cm}
+\usepackage{fancyhdr} % Custom headers and footers
+\pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
+\fancyhead{} % No page header - if you want one, create it in the same way as the footers below
+\fancyfoot[L]{} % Empty left footer
+\fancyfoot[C]{} % Empty center footer
+\fancyfoot[R]{\thepage} % Page numbering for right footer
+\renewcommand{\headrulewidth}{0pt} % Remove header underlines
+\renewcommand{\footrulewidth}{0pt} % Remove footer underlines
+\setlength{\headheight}{13.6pt} % Customize the height of the header
+
+\numberwithin{equation}{section} % Number equations within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs - comment this line for an assignment with lots of text
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command with 1 argument of height
+
+\title{	
+\normalfont \normalsize 
+\textsc{University of Freiburg} \\ [25pt] % Your university, school and/or department name(s)
+\horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
+\huge Exercise 3: Mc \& TD \\ % The assignment title
+\horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
+}
+
+\author{Nico Ott 4214197\\ Lior Fuks 4251285 \\Hendrik Vloet 4324249}
+
+\date{\normalsize\today} % Today's date or a custom date
+
+\begin{document}
+
+\maketitle % Print the title
+
+%----------------------------------------------------------------------------------------
+%	PROBLEM 1
+%----------------------------------------------------------------------------------------
+\section{Task 1}
+\subsection{a)}
+Episode 1:
+\begin{flalign*}
+	V_1(2,1) = 5\\
+	V_1(2,3) = 6\\
+	V_1(1,3) = 7\\
+	V_1(1,3) = 8\\
+	V_1(1,4) = 9\\
+	V_1(2,5) = 10\\
+	\text{other states: 0}
+\end{flalign*}
+Episode 2:
+\begin{flalign*}
+	V_2(2,1) = 5+ \frac{1}{2}*(-102-5) = -48.5\\
+	V_2(2,2) = 6 + \frac{1}{2}*(-101-6) = -47.5\\
+	V_2(2,3) = 7 + \frac{1}{2}*(-100-7) = -46.5\\
+	\text{other state: unchanged}
+\end{flalign*}
+Episode 3:
+\begin{align*}
+	V_3(2,1) = -48.5+\frac{1}{3}*(-5-(-48.5))= -30.7\\
+	V_3(2,2) = -47.5+\frac{1}{3}*(-6-(-47.5)) = -29.7\\
+	V_3(2,3) = -46.5+\frac{1}{3}*(-7-(-46.5)) = -28.7\\
+	V_3(2,4) = 0+ \frac{1}{3}*(8-0) = 2.7\\
+	V_3(1,4) = 9+ \frac{1}{3}*(9-9) = 9\\
+	V_3(2,4) \leftarrow \text{no update, was visited before}\\
+	\text{other state: unchanged}	
+\end{align*}
+
+
+\begin{center}
+
+\textbf{Values after 3 Episodes of first visit MC}\\
+\begin{tabular}{|c|c|c|c|c|}
+\hline 
+0 & 0 & 8 & 9 & 10 \\ 
+\hline 
+-30.7 & -29.7 & -28.7 & 2.7 & 0 \\ 
+\hline 
+0 & 0 & 0 & 0 & 0 \\ 
+\hline 
+\end{tabular} 
+
+\end{center}
+\subsection{b)}
+TD-Error
+\begin{align*}
+	\delta _4 (2,1) = -1 + 0 - (30.7) = -29.7 \\
+	\delta _4 (1,1) = -1 + 0 - (0) = -1 \\
+	\delta _4 (1,2) = -1 + 8 - (0) = 7 \\
+	\delta _4 (1,3) = -1 + 9 - (8) = 0 \\
+	\delta _4 (1,4) = -1 + 10 - (9) =0  \\
+	\delta _4 (1,5) = 10 + 0 -(10) = 0 \\
+\end{align*}
+
+
+%\section{Experiences}
+%\begin{itemize}
+%	\item \textbf{Nico}
+%	\begin{itemize}
+%		\item Invested Time:
+%		\begin{itemize}
+%			
+%		\end{itemize}		
+%		\item General:
+%		
+%		\end{itemize}
+%	\end{itemize}
+%
+%	\item \textbf{Hendrik}
+%	\begin{itemize}
+%		\item Invested time:
+%		\begin{itemize}
+%			\item Meeting: 2h
+%			\item Lecture 3: 3h
+%			\item Exercise : $\sim$ 12h
+%		\end{itemize}
+%		\item General:
+%		\begin{itemize}
+%			\item understanding issues with the unit test structure of the python environment
+%			\item I had trouble comprehending why we had to go for a deterministic policy, thanks to rr114\_uni-freiburg  for helping out!
+%			\item Sadly, protocol morale for the google doc seems rather low. I added some things regarding the video lecture and the according discussion last time.		
+%		\end{itemize}
+%	\end{itemize}
+%\end{itemize}
+%	
+
+
+\end{document}
