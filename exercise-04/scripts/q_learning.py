@@ -74,8 +74,7 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     counter = 0
     while(True):        
         # take one step, based on teacher policy, here: epsilon greedy
-        action_probability = policy(state)
-        action = np.random.choice(np.arange(len(action_probability)), p=action_probability)
+        action = np.random.choice(np.arange(len(policy(state))), p=policy(state))
         next_state, reward, done, info = env.step(action)
         
         # Keeps track of useful statistics
