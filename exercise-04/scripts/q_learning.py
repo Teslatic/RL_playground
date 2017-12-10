@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import itertools
 from collections import defaultdict, namedtuple
 
 EpisodeStats = namedtuple("Stats",["episode_lengths", "episode_rewards"])
@@ -20,8 +21,10 @@ def make_epsilon_greedy_policy(Q, epsilon, nA):
   """
   
   def policy_fn(observation):
-    pass
-    # Implement this!
+    act_prob = np.ones(nA, dtype=float)* epsilon/nA
+    max_action = np.argmax(Q[observation])
+    act_prob[max_action] += (1.0-epsilon)
+    return act_prob
   return policy_fn
 
 def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
@@ -47,19 +50,47 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
   Q = defaultdict(lambda: np.zeros(env.action_space.n))
 
   # Keeps track of useful statistics
-  stats = EpisodeStats(
-    episode_lengths=np.zeros(num_episodes),
+  stats = EpisodeStats(episode_lengths=np.zeros(num_episodes),
     episode_rewards=np.zeros(num_episodes))    
   
   # The policy we're following
   policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
-  
+  #print(num_episodes)
   for i_episode in range(num_episodes):
     # Print out which episode we're on, useful for debugging.
     if (i_episode + 1) % 100 == 0:
       print("\rEpisode {}/{}.".format(i_episode + 1, num_episodes), end="")
       sys.stdout.flush()
+   
+    # first action
+    state = env.reset()
+   
+    # generate episode, i.e. 
+    # 1.) choose action based on epsilon-greedy
+    # 2.) take a step 
+    # 3.) update statistics and TD error
+    # -> do until done == 1
+    # techically a DO-WHILE loop, that breaks when the done flag is raised  
+    counter = 0
+    while(True):        
+        # take one step, based on teacher policy, here: epsilon greedy
+        action_probability = policy(state)
+        action = np.random.choice(np.arange(len(action_probability)), p=action_probability)
+        next_state, reward, done, info = env.step(action)
+        
+        # Keeps track of useful statistics
+        # count steps taken in i-th episode
+        stats.episode_lengths[i_episode] = counter
+        # accumulate reward in i-th episode -> total return
+        stats.episode_rewards[i_episode] += reward
+        
+        # update temporal-difference
+        Q[state][action] += alpha* (reward + discount_factor * 
+                             Q[next_state][np.argmax(Q[next_state])]-Q[state][action])
+ 
+        if done:
+            break
+        state = next_state
+        counter += 1
     
-    # Implement this!
-  
   return Q, stats
