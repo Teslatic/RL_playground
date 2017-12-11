@@ -30,10 +30,14 @@ def create_greedy_policy(Q):
     of action probabilities.
   """
   
-  def policy_fn(observation):    
+  def policy_fn(observation):
+    #print("observation: {}".format(Q[observation]))
     act_prob = np.zeros_like(Q[observation], dtype=float)
+    #print(act_prob)
     max_action = np.argmax(Q[observation])
+    #print(max_action)
     act_prob[max_action] = 1.0
+    #print("deterministic act_prob: {}".format(act_prob))
     return act_prob
   return policy_fn
 
@@ -72,7 +76,7 @@ def mc_control_importance_sampling(env, num_episodes, behavior_policy, discount_
     ### loop over all episodes
 
     for i_episode in range(num_episodes):
-        done = 0
+        #done = 0
         # states visited in current episode
         visited = []
         episode = []
@@ -81,7 +85,7 @@ def mc_control_importance_sampling(env, num_episodes, behavior_policy, discount_
         # sample the start state for first visit check
         visited.append(observation)
         ## Generate one episode
-        while done==0:            
+        while True:            
             # act based on teacher policy ~> take random action from teacher
             probabilities = behavior_policy(observation)
             # acions are 0 or 1, here chosen uniformly.
@@ -91,40 +95,41 @@ def mc_control_importance_sampling(env, num_episodes, behavior_policy, discount_
             # take only first visit into visited states list, save observation,actions,rewards
             # for update purpose 
             if(not(observation in visited)):
-                # list to check history ~> first visit check
+                ## list to check history ~> first visit check
                 visited.append(observation)
                 # needed for later update steps
                 episode.append((observation,action,reward))
             # debugging output: check what is passed down to update steps
             if i_episode % 1000 == 0:
-                print("\r Episode {}/{}| packed episode: {}|  ".format(i_episode,num_episodes,episode, end=""))
+                print("\r Episode {}/{}| packed episode: {}|  ".format(i_episode,num_episodes,episode), end="")
                 sys.stdout.flush()
+            if done:
+                break
         
         G = 0.0
         W = 1.0
+
        
         ## Update Q values from last to first entry, i.e. rewind the episode
-        for t in range(len(episode))[::-1]:
+        for t in range(len(episode)-1)[::-1]:
             # unpack state, action and reward for handling update computations
-            #print(episode[t])
             state, action, reward = episode[t]
-            #if t % 1000 == 0:
-                #print("\r state, action, reward {}".format(episode[t]),end="")
-                #sys.stdout.flush()
-            #print(state,action,reward)
             # update total return
             G = discount_factor*G + reward
             # update denominator term
             C[state][action] += W
             # update action value
             Q[state][action] += (W/C[state][action]) * (G-Q[state][action])
-            # update W
-           
+            #print(Q)
             target_policy(state)[action] = np.argmax(Q[state][action])
-           
+            #print(action,target_policy(state)[action])
             if action != target_policy(state)[action]:
                 break
-            W = W * (1.0/behavior_policy(state)[action])
+            # update W
+            W = W * (1./behavior_policy(state)[action])
+            #print(W)
             
-                                                  
+    for key,val in Q.items():
+        print(key,val)
+                                     
     return Q, target_policy
