@@ -120,7 +120,6 @@ def reinforce(sess, env, policy, best_policy, num_episodes, discount_factor=1.0)
     # Generate an episode.
     # An episode is an array of (state, action, reward) tuples
     episode = []
-    print(type(episode))
 
     state = env.reset()
     # print([state])
