@@ -49,8 +49,8 @@ class Policy():
     # -----------------------------------------------------------------------
     # TODO: Implement softmax output
     # -----------------------------------------------------------------------
+    # softmax prediction
     self.predictions = tf.nn.softmax(self.fc3)
-
 
     # Get the predictions for the chosen actions only
     gather_indices = tf.range(batch_size) * tf.shape(self.predictions)[1] + self.actions_pl
@@ -60,6 +60,7 @@ class Policy():
     # -----------------------------------------------------------------------
     # the objective, since the predefined optimizers only minimize in
     # tensorflow.
+
     self.objective = -tf.log(self.action_predictions)*self.targets_pl
 
     self.optimizer = tf.train.AdamOptimizer(0.0001)
@@ -75,8 +76,10 @@ class Policy():
       The prediction of the output tensor.
     """
     f_dict = {self.states_pl: [s]}
-    # p = sess.run(self.predictions, { self.states_pl: s })[0]
+
+
     p = sess.run(self.predictions, f_dict)[0]
+
     return np.random.choice(VALID_ACTIONS, p=p), p
 
   def update(self, sess, s, a, y):
@@ -93,6 +96,7 @@ class Policy():
     feed_dict = { self.states_pl: [s], self.targets_pl: [y], self.actions_pl: [a]}
     sess.run(self.train_op, feed_dict)
 
+    # loss and q_values do not exist here or aren't use
     # return loss, q_values
     return
 
@@ -120,52 +124,48 @@ def reinforce(sess, env, policy, best_policy, num_episodes, discount_factor=1.0)
     # Generate an episode.
     # An episode is an array of (state, action, reward) tuples
     episode = []
-    print(type(episode))
 
     state = env.reset()
     # print([state])
 
     # +1 for indexing issues
-    print("generate episode {}/{}".format(i_episode+1,num_episodes))
+    print("\rgenerate episode {}/{}".format(i_episode+1,num_episodes),end="")
+    sys.stdout.flush()
     for t in range(500):
       # -----------------------------------------------------------------------
       # TODO: Implement this
       # -----------------------------------------------------------------------
 
       action, prob_actions = policy.predict(sess,state)
-      # action = np.random.choice(np.arange(len(prob_actions)), p=prob_actions)
       next_state, reward, done, _ = env.step(action)
+      # some debugging outputs
       # print("policy.predict probabilities: {}".format(prob_actions))
       # print("picked action: {}".format(action_verbose[action]))
       # print("next state: {}|\treward: {:.4f}".format(next_state,reward))
 
+      # build episode tuple
       episode.append((state,action,reward))
 
       # cumulative reward per episode
       stats.episode_rewards[i_episode] += reward
       stats.episode_lengths[i_episode] = t
 
-
-      # print("total episode reward: {}".format( stats.episode_rewards[i_episode] ))
-      # print("\rStep {} @ Episode {}/{} ({})".format(t, i_episode + 1, num_episodes, stats.episode_rewards[i_episode - 1]), end="")
-      # sys.stdout.flush()
-
       if done:
           break
       state = next_state
-    # print("now going through the generated episode...")
-    # print("total episode reward: {}".format( stats.episode_rewards[i_episode] ))
+
     test_return = []
     for t, ep in enumerate(episode):
+        # unwrapping the episode tuple
         s = ep[0]
         a = ep[1]
         r = ep[2]
-        # print(s,a,r)
+
+        # calculate total return per time step
         total_return = sum(discount_factor**i * r for i,t in enumerate(episode[t:]))
-        # print(total_return)
+
+        # update the policy, target is the total return
         policy.update(sess,s,a,total_return)
-        # test_return.append(total_return)
-        # print("total return in timestep {}: {}".format(t,total_return))
 
   return stats
 
@@ -197,14 +197,11 @@ def plot_episode_stats(stats, smoothing_window=10, noshow=False):
 
 
 #####################__GLOBALS__#########################
-EPISODES = 3000  #default: 3000
+EPISODES = 3000 #default: 3000
 
 
 
 #########################################################
-
-# Keeps track of sum and count of returns for each state
-# to calculate an average.
 
 
 if __name__ == "__main__":
@@ -213,25 +210,26 @@ if __name__ == "__main__":
   p = Policy()
   bp = BestPolicy()
   action_verbose = {0:"left",1:"nothing",2:"right"}
+
   sess = tf.Session()
   tf.global_variables_initializer().run(session=sess)
+
   stats = reinforce(sess, env, p, bp, EPISODES)
   success = 0
   plot_episode_stats(stats)
-  # saver = tf.train.Saver()
-  # saver.save(sess, "./policies.ckpt")
+  # save the policy
+  saver = tf.train.Saver()
+  saver.save(sess, "./policies.ckpt")
 
   for _ in range(5):
     state = env.reset()
     for i in range(500):
       env.render()
-      # time.sleep(0.05)
-      chosen_action = p.predict(sess, state)[0]
-      print("chosen action: {}".format(action_verbose[chosen_action]))
-      # sys.stdout.flush()
-      _, reward, done, _ = env.step(chosen_action)
+      chosen_action,prob = p.predict(sess, state)
+      print("chosen action: {}\t {}".format(action_verbose[chosen_action],prob))
+      state, reward, done, _ = env.step(chosen_action)
       if done:
         if reward==10:
             success +=1
         break
-print("success rate: {}%".format(success/EPISODES * 100))
+print("success rate: {}%".format(success/5 * 100))
