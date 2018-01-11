@@ -83,13 +83,15 @@ def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
         # accumulate reward in i-th episode -> total return
         stats.episode_rewards[i_episode] += reward
         
-        # update temporal-difference
+        # update temporal-difference, equation according to literature
         Q[state][action] += alpha* (reward + discount_factor * 
                              Q[next_state][np.argmax(Q[next_state])]-Q[state][action])
- 
+        # if done flag raises, break out of loop
         if done:
             break
+        # save next state to evaluate
         state = next_state
+        # counter
         counter += 1
     
   return Q, stats
