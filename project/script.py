@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import gym
 import sys
-from pendulum import PendulumEnv
+from pendulum import PendulumEnv, angle_normalize
 import random
 from random import randrange
 import numpy as np
@@ -50,13 +50,17 @@ total_reward = 0
 episode_reward = 0
 success = 0
 
+state = env.reset()
 for ep in range(1,EPISODES+1):
-    state = env.reset()
+    #state = env.reset()
     if ep % SHOW_PROGRESS == 0 and ep != 0:
         print("| Episode: {}\t| Reward: {}".format(ep,episode_reward))
     for t in range(TIMESTEPS):
-        # env.render()
-        next_state, reward, _, _ = env.step(random.choice(slicer.discrete_actions))
+        env.render()
+        #next_state, reward, _, _ = env.step(random.choice(slicer.discrete_actions))
+        next_state,reward,_,_ = env.step(-2)
+        #print("env state [0]",env.state[0])
+        #print("normalize function:",angle_normalize(env.state[0]))
         if reward == 1:
             episode_reward += 1
             success += 1
