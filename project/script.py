@@ -51,8 +51,8 @@ for ep in range(TRAINING_EPISODES):
     state = env.reset()
     episode_reward = 0
     for t in range(200):
-        if ep % SHOW_PROGRESS == 0 and ep != 0:
-            env.render()
+        # if ep % SHOW_PROGRESS == 0 and ep != 0:
+        #     env.render()
         action = agent.act(state, False)
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
 
