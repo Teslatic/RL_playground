@@ -5,6 +5,7 @@ from pendulum import PendulumEnv, angle_normalize
 import random
 from random import randrange
 import numpy as np
+from pendulumAgent import DankAgent
 
 
 
@@ -34,38 +35,60 @@ class Discretizer():
 
 
 ####### INTIALISATION ##########################################################
-
 env = PendulumEnv()
-slicer = Discretizer(-env.max_torque,env.max_torque)
+agent = DankAgent([-env.max_torque,env.max_torque])
+nepisodes = 0
+######## CONSTANTS ############################################################
+#
+SHOW_PROGRESS = 10
+TRAINING_EPISODES = 5000
 
-######### CONSTANTS ############################################################
 
-SHOW_PROGRESS = 500
-EPISODES = 10000
-TIMESTEPS = 200
-
-####### GLOBAL VARIABLES #######################################################
-
-total_reward = 0
-episode_reward = 0
-success = 0
-
-state = env.reset()
-for ep in range(1,EPISODES+1):
-    #state = env.reset()
-    if ep % SHOW_PROGRESS == 0 and ep != 0:
-        print("| Episode: {}\t| Reward: {}".format(ep,episode_reward))
-    for t in range(TIMESTEPS):
-        env.render()
-        #next_state, reward, _, _ = env.step(random.choice(slicer.discrete_actions))
-        next_state,reward,_,_ = env.step(-2)
-        #print("env state [0]",env.state[0])
-        #print("normalize function:",angle_normalize(env.state[0]))
-        if reward == 1:
-            episode_reward += 1
-            success += 1
-            break
-        state = next_state
-    total_reward += episode_reward
+# TIMESTEPS = 200
+# state, reward, _ ,_  = env.step(0.2)
+list_episode_reward = []
+for ep in range(TRAINING_EPISODES):
+    state = env.reset()
     episode_reward = 0
-print("Total reward over all episodes: {}\t| Success rate: {:.2f}%".format(total_reward,(success/EPISODES)*100))
+    for t in range(200):
+        if ep % SHOW_PROGRESS == 0 and ep != 0:
+            env.render()
+        action = agent.act(state, False)
+        next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+
+        agent.train(state, action, next_state, reward, done)
+        state = next_state
+        episode_reward += reward
+    if ep % SHOW_PROGRESS == 0:
+        print("Episode {}\t| Reward: {}".format(ep,reward))
+    list_episode_reward.append(episode_reward)
+
+
+    nepisodes += 1
+    agent.update_target_model()
+#
+# ####### GLOBAL VARIABLES #######################################################
+#
+# total_reward = 0
+# episode_reward = 0
+# success = 0
+#
+# state = env.reset()
+# for ep in range(1,EPISODES+1):
+#     #state = env.reset()
+#     if ep % SHOW_PROGRESS == 0 and ep != 0:
+#         print("| Episode: {}\t| Reward: {}".format(ep,episode_reward))
+#     for t in range(TIMESTEPS):
+#         env.render()
+#         #next_state, reward, _, _ = env.step(random.choice(slicer.discrete_actions))
+#         next_state,reward,_,_ = env.step(-2)
+#         print("env state",env.state)
+#         #print("normalize function:",angle_normalize(env.state[0]))
+#         if reward == 1:
+#             episode_reward += 1
+#             success += 1
+#             break
+#         state = next_state
+#     total_reward += episode_reward
+#     episode_reward = 0
+# print("Total reward over all episodes: {}\t| Success rate: {:.2f}%".format(total_reward,(success/EPISODES)*100))
