@@ -17,8 +17,10 @@ class DankAgent():
         self.disc_actions = self._discretize_actions()
         self.gamma = 0.95
         self.epsilon = 1.0
-        self.epsilon_decay = 0.001
+        self.init_epsilon = 0.9
+        self.eps_decay_rate = 0.001
         self.learning_rate = 0.001
+        self.decay_const = 0.1
         self.model = self._build_model()
         self.target_model = self._build_model()
 

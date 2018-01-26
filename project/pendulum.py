@@ -16,7 +16,7 @@ class PendulumEnv(gym.Env):
         self.max_torque=2.
         self.dt=.05
         self.viewer = None
-
+        self.cnt = 0
         high = np.array([1., 1., self.max_speed])
         self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,))
         self.observation_space = spaces.Box(low=-high, high=high)
@@ -25,7 +25,12 @@ class PendulumEnv(gym.Env):
 
         if reward_function is None:
             def reward(pendulum):
-                return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
+                # return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
+                if self.cnt==0:
+                    return 0
+                else:
+                    return 10 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else (1-np.abs(angle_normalize(pendulum.state[0])))*1
+
             self.reward = reward
         else:
             self.reward = reward_function
