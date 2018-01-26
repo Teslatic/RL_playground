@@ -7,7 +7,8 @@ from collections import deque
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras import backend as K
-from keras.layers import Conv2D,Flatten,Dense
+from keras.layers import Flatten,Dense, Dropout
+import datetime
 
 class DankAgent():
     def __init__(self,action_interval):
@@ -17,7 +18,7 @@ class DankAgent():
         self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_decay = 0.001
-        self.learning_rate = 0.0001
+        self.learning_rate = 0.001
         self.model = self._build_model()
         self.target_model = self._build_model()
 
@@ -32,11 +33,12 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(3,input_shape = (3,)))
-        model.add(Dense(120))
-        model.add(Dense(120))
-        model.add(Dense(240))
-        model.add(Dense(720))
+        model.add(Dense(32,input_shape = (3,),activation = 'relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(64, activation = 'relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(512, activation = 'relu'))
+        model.add(Dropout(0.5))
         model.add(Dense(int(self.ticks)))
         model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
@@ -69,3 +71,20 @@ class DankAgent():
             t = self.target_model.predict(next_state)[0]
 
             target[0][action] = reward + self.gamma * t[np.argmax(a)]
+        self.history = self.model.fit(state, target, epochs=1, verbose=0)
+
+
+    def load(self, file_name):
+        self.model.load_weights(file_name)
+        print_timestamp()
+        print("agent loaded weights from file '{}' ".format(file_name))
+        self.update_target_model()
+
+    def save(self, file_name):
+        print_timestamp()
+        self.model.save_weights(file_name)
+        print("agent saved weights in file '{}' ".format(file_name))
+
+def print_timestamp(string = ""):
+    now = datetime.datetime.now()
+    print(string + now.strftime("%Y-%m-%d %H:%M"))

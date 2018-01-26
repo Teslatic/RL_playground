@@ -6,8 +6,12 @@ import random
 from random import randrange
 import numpy as np
 from pendulumAgent import DankAgent
+import datetime
 
 
+def print_timestamp(string = ""):
+    now = datetime.datetime.now()
+    print(string + now.strftime("%Y-%m-%d %H:%M"))
 
 class Discretizer():
     def __init__(self,min_val,max_val):
@@ -35,24 +39,31 @@ class Discretizer():
 
 
 ####### INTIALISATION ##########################################################
+weights_file = "network.h5"
 env = PendulumEnv()
 agent = DankAgent([-env.max_torque,env.max_torque])
+agent.model.summary()
+
 nepisodes = 0
 ######## CONSTANTS ############################################################
 #
 SHOW_PROGRESS = 10
 TRAINING_EPISODES = 5000
+AUTO_SAVER = 50
 
 
 # TIMESTEPS = 200
 # state, reward, _ ,_  = env.step(0.2)
 list_episode_reward = []
 for ep in range(TRAINING_EPISODES):
+    if ep % AUTO_SAVER == 0 and nepisodes != 0:
+        print_timestamp("saved")
+        agent.save(weights_file)
     state = env.reset()
     episode_reward = 0
     for t in range(200):
-        # if ep % SHOW_PROGRESS == 0 and ep != 0:
-        #     env.render()
+        if ep % SHOW_PROGRESS == 0 and ep != 0:
+            env.render()
         action = agent.act(state, False)
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
 
@@ -60,7 +71,9 @@ for ep in range(TRAINING_EPISODES):
         state = next_state
         episode_reward += reward
     if ep % SHOW_PROGRESS == 0:
-        print("Episode {}\t| Reward: {}".format(ep,reward))
+        print("Episode {}\t| Reward: {}\t| Loss: {:.4f}".format(ep,reward,
+            agent.history.history['loss'][0]))
+
     list_episode_reward.append(episode_reward)
 
 
