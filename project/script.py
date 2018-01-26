@@ -50,9 +50,10 @@ agent.model.summary()
 nepisodes = 0
 ######## CONSTANTS ############################################################
 #
-SHOW_PROGRESS = 1
+
 TRAINING_EPISODES = 5000
 AUTO_SAVER = 50
+SHOW_PROGRESS = 50
 #
 # state = env.reset()
 # state, r, _ , _ = env.step(0)
@@ -77,23 +78,21 @@ for ep in range(TRAINING_EPISODES):
     state = env.reset()
     episode_reward = 0
     for t in range(200):
-        # if ep % SHOW_PROGRESS == 0 and ep != 0:
-        #     env.render()
+        if ep % SHOW_PROGRESS == 0 and ep != 0:
+            env.render()
 
-        if random.random() <= agent.epsilon:
-            action = randrange(-2,2)
-        else:
-            action = agent.act(state, False)
+        action = agent.act(state, True)[0]
+
 
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
         # next_state, reward, done , _ = env.step(2)
         agent.train(state, action, next_state, reward, done)
         state = next_state
         episode_reward += reward
-    if ep % SHOW_PROGRESS == 0:
-        print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| Loss: {:.4f}\t| epsilon: {:.2f}".format(ep, TRAINING_EPISODES,t,episode_reward,
+    print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| Loss: {:.4f}\t| epsilon: {:.2f}".format(ep, TRAINING_EPISODES,t,episode_reward,
             agent.history.history['loss'][0],agent.epsilon))
 
+        # print("Episode {}/{}\t| Step: {}\t| Reward: {}\t".format(ep, TRAINING_EPISODES,t,episode_reward))
     agent.epsilon = agent.init_epsilon*np.exp(-agent.eps_decay_rate*ep)+agent.decay_const
 
 

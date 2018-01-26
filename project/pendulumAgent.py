@@ -50,14 +50,15 @@ class DankAgent():
 
     def act(self, state, en_explore = True):
         if random.random() <= self.epsilon and en_explore:
-            action = random.choice(self.disc_actions)
+            # action = random.choice(self.disc_actions)==self.disc_actions
+            action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
         else:
             state = state.reshape((1,3))
             action_values = self.model.predict(state)
+
             # print("action values",action_values)
             # print("greedy pick from action values",np.argmax(action_values[0]))
-
-            action = np.argmax(action_values)
+            action = np.array((np.argmax(action_values),))
             # print("discrete actions", self.discrete_actions)
         return action
 
