@@ -18,7 +18,7 @@ class DankAgent():
         self.gamma = 0.95
         self.epsilon = 1.0
         self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.001
+        self.eps_decay_rate = 0.00015
         self.learning_rate = 0.001
         self.decay_const = 0.1
         self.model = self._build_model()
@@ -60,9 +60,12 @@ class DankAgent():
             # print("greedy pick from action values",np.argmax(action_values[0]))
             action = np.array((np.argmax(action_values),))
             # print("discrete actions", self.discrete_actions)
+
         return action
 
-    def train(self,state, action, next_state, reward, done):
+    # def train(self,state, action, next_state, reward, done):
+    def train(self, batch):
+        state, action, reward, next_state, done = batch
         state = state.reshape((1,3))
         next_state = next_state.reshape((1,3))
 
@@ -74,6 +77,7 @@ class DankAgent():
             t = self.target_model.predict(next_state)[0]
 
             target[0][action] = reward + self.gamma * t[np.argmax(a)]
+
         self.history = self.model.fit(state, target, epochs=1, verbose=0)
 
 
@@ -87,6 +91,7 @@ class DankAgent():
         print_timestamp()
         self.model.save_weights(file_name)
         print("agent saved weights in file '{}' ".format(file_name))
+
 
 def print_timestamp(string = ""):
     now = datetime.datetime.now()

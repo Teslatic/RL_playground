@@ -22,18 +22,36 @@ class PendulumEnv(gym.Env):
         self.observation_space = spaces.Box(low=-high, high=high)
 
         self._seed()
+        #
+        # if reward_function is not None:
+        #     def reward(pendulum):
+        #         # return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
+        #         if self.cnt==0:
+        #             return 0
+        #         else:
+        #             return 10 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else (1-np.abs(angle_normalize(pendulum.state[0])))*1
+        #
+        #     self.reward = reward
+        # else:
 
-        if reward_function is None:
-            def reward(pendulum):
-                # return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
-                if self.cnt==0:
-                    return 0
+        def my_reward(pendulum):
+            if self.cnt == 0:
+                print("test")
+                return 0
+            else:
+                if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1:
+                    return 10
                 else:
-                    return 10 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else (1-np.abs(angle_normalize(pendulum.state[0])))*1
+                    if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05:
+                        return 20
+                    else:
+                        if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025:
+                            return 50
+                        else:
+                            return (1-np.abs(angle_normalize(pendulum.state[0])))*1
 
-            self.reward = reward
-        else:
-            self.reward = reward_function
+        self.reward = my_reward
+        print(self.reward)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)

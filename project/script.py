@@ -50,8 +50,9 @@ agent.model.summary()
 
 nepisodes = 0
 ######## CONSTANTS ############################################################
-#
 
+MEMORY_SIZE = 50000
+memory = []
 TRAINING_EPISODES = 30000
 AUTO_SAVER = 50
 SHOW_PROGRESS = 50
@@ -86,12 +87,18 @@ for ep in range(TRAINING_EPISODES):
 
 
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+
+        if len(memory) == MEMORY_SIZE:
+            memory.pop(0)
+        memory.append((state, action, reward, next_state, done))
+        batch = random.choice(memory)
         # next_state, reward, done , _ = env.step(2)
-        agent.train(state, action, next_state, reward, done)
+        # agent.train(state, action, next_state, reward, done)
+        agent.train(batch)
         state = next_state
         episode_reward += reward
-    print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| Loss: {:.4f}\t| epsilon: {:.2f}".format(ep, TRAINING_EPISODES,t,episode_reward,
-            agent.history.history['loss'][0],agent.epsilon))
+    print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| Loss: {:.4f}\t| epsilon: {:.2f}\t|buffer: {}".format(ep, TRAINING_EPISODES,t,episode_reward,
+            agent.history.history['loss'][0],agent.epsilon,len(memory)))
 
         # print("Episode {}/{}\t| Step: {}\t| Reward: {}\t".format(ep, TRAINING_EPISODES,t,episode_reward))
     agent.epsilon = agent.init_epsilon*np.exp(-agent.eps_decay_rate*ep)+agent.decay_const

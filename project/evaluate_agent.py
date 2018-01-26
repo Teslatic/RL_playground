@@ -20,6 +20,8 @@ import datetime
 
 
 env = PendulumEnv()
+env.cnt += 1
+
 test_agent = DankAgent([-env.max_torque,env.max_torque])
 
 
@@ -38,7 +40,8 @@ for ep in range(TESTING_EPISODES):
     for t in range(200):
         env.render()
 
-        action = test_agent.act(state, False)[0]
+        action = test_agent.act(state, False)
+        print(action)
         next_state, reward, done , _ = env.step(test_agent.discrete_actions[action])
 
 
