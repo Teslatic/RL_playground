@@ -8,6 +8,7 @@ import numpy as np
 from pendulumAgent import DankAgent
 import datetime
 import time
+import matplotlib.pyplot as plt
 
 
 
@@ -51,7 +52,7 @@ nepisodes = 0
 ######## CONSTANTS ############################################################
 #
 
-TRAINING_EPISODES = 5000
+TRAINING_EPISODES = 30000
 AUTO_SAVER = 50
 SHOW_PROGRESS = 50
 #
@@ -102,6 +103,12 @@ for ep in range(TRAINING_EPISODES):
     nepisodes += 1
     agent.update_target_model()
 
+plt.figure()
+plt.plot(list_episode_reward,label = "DankAgent")
+plt.xlabel("Episode")
+plt.ylabel("Reward")
+plt.legend()
+plt.show()
 # ####### GLOBAL VARIABLES #######################################################
 #
 # total_reward = 0
