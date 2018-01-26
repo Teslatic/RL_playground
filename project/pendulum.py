@@ -39,13 +39,13 @@ class PendulumEnv(gym.Env):
                 print("test")
                 return 0
             else:
-                if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1:
+                if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.025:
                     return 10
                 else:
                     if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05:
                         return 20
                     else:
-                        if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025:
+                        if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.1:
                             return 50
                         else:
                             return (1-np.abs(angle_normalize(pendulum.state[0])))*1
