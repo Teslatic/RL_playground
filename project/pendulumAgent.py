@@ -13,13 +13,13 @@ import datetime
 class DankAgent():
     def __init__(self,action_interval):
         self.action_interval = action_interval
-        self.step_length = 0.1
+        self.step_length = 0.01 #def: 0.1
         self.disc_actions = self._discretize_actions()
         self.gamma = 0.95
         self.epsilon = 1.0
         self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.00015
-        self.learning_rate = 0.001
+        self.eps_decay_rate = 0.0015 #def for 30000 ep: 0.00015
+        self.learning_rate = 0.001 #def: 0.001
         self.decay_const = 0.1
         self.model = self._build_model()
         self.target_model = self._build_model()
@@ -35,10 +35,10 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(32,input_shape = (3,),activation = 'relu'))
+        model.add(Dense(1024,input_shape = (2,),activation = 'relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(64, activation = 'relu'))
-        model.add(Dropout(0.5))
+        # model.add(Dense(2048, activation = 'relu'))
+        # model.add(Dropout(0.5))
         model.add(Dense(512, activation = 'relu'))
         model.add(Dropout(0.5))
         model.add(Dense(int(self.ticks)))
@@ -53,7 +53,7 @@ class DankAgent():
             # action = random.choice(self.disc_actions)==self.disc_actions
             action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
         else:
-            state = state.reshape((1,3))
+            state = state.reshape((1,2))
             action_values = self.model.predict(state)
 
             # print("action values",action_values)
@@ -66,8 +66,8 @@ class DankAgent():
     # def train(self,state, action, next_state, reward, done):
     def train(self, batch):
         state, action, reward, next_state, done = batch
-        state = state.reshape((1,3))
-        next_state = next_state.reshape((1,3))
+        state = state.reshape((1,2))
+        next_state = next_state.reshape((1,2))
 
         target = self.model.predict(state)
         if done:

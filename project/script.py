@@ -16,84 +16,57 @@ def print_timestamp(string = ""):
     now = datetime.datetime.now()
     print(string + now.strftime("%Y-%m-%d %H:%M"))
 
-class Discretizer():
-    def __init__(self,min_val,max_val):
-        self.min_val = min_val
-        self.max_val = max_val
-        self._check_inputs()
-        self._discretize()
-
-    def _check_inputs(self):
-        self.step_length = input("Enter desired step length of the action-space that shall be discretized [0..1]: ")
-        self.step_length = float(self.step_length)
-        assert self.step_length<=env.max_torque, "step length must be between 0 and {}".format(env.max_torque)
-        assert self.min_val<self.max_val, "min value has to be greater or equal to the max value"
-        assert self.step_length>0, "step length hast to be greater than zero!"
-
-    def _discretize(self):
-        self.interval = np.array([self.min_val,self.max_val])
-        self.ticks = (np.abs(self.min_val) + np.abs(self.max_val)) / self.step_length
-        self.discrete_actions = np.linspace(self.min_val,self.max_val,self.ticks)
-        print("I discretized your action-space for you:")
-        print("|---------------------------------------------------------------|")
-        print("|Action Interval {}\t| Ticks: {:.0f}\t| Delta {:.4f}\t|".format(self.interval,self.ticks,np.diff(self.discrete_actions)[-1]))
-        print("|---------------------------------------------------------------|")
-
 
 
 ####### INTIALISATION ##########################################################
 weights_file = "network.h5"
+load_existent_model = False
 env = PendulumEnv()
 env.cnt += 1
 agent = DankAgent([-env.max_torque,env.max_torque])
 agent.model.summary()
+if load_existent_model:
+    agent.load(weights_file)
+
 
 nepisodes = 0
 ######## CONSTANTS ############################################################
-
-MEMORY_SIZE = 50000
+#def: 50000
+MEMORY_SIZE = 80000
 memory = []
-TRAINING_EPISODES = 30000
+#def: 30000
+TRAINING_EPISODES = 3000
 AUTO_SAVER = 50
-SHOW_PROGRESS = 50
-#
-# state = env.reset()
-# state, r, _ , _ = env.step(0)
-# time.sleep(4)
-# for t in range(20000000):
-#
-#     state, r, _ , _ = env.step(random.randrange(-2,2))
-#     env.render()
-#
-#
-#     print(state,r)
-#     time.sleep(0.02)
+SHOW_PROGRESS = 10
+# def: 2000
+TIMESTEPS = 1000
 
-
-# TIMESTEPS = 200
-# state, reward, _ ,_  = env.step(0.2)
 list_episode_reward = []
 for ep in range(TRAINING_EPISODES):
     if ep % AUTO_SAVER == 0 and nepisodes != 0:
         print_timestamp("saved")
         agent.save(weights_file)
     state = env.reset()
+    state = np.array((state[0],state[2]))
+    state = np.round(state,2)
     episode_reward = 0
-    for t in range(200):
+    for t in range(TIMESTEPS):
         if ep % SHOW_PROGRESS == 0 and ep != 0:
             env.render()
+            print("\rRendering episode {}/{}".format(ep,TRAINING_EPISODES),end="")
+            sys.stdout.flush()
 
         action = agent.act(state, True)[0]
 
 
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+        next_state = np.array((next_state[0],next_state[2]))
+        next_state = np.round(next_state,2)
 
         if len(memory) == MEMORY_SIZE:
             memory.pop(0)
         memory.append((state, action, reward, next_state, done))
         batch = random.choice(memory)
-        # next_state, reward, done , _ = env.step(2)
-        # agent.train(state, action, next_state, reward, done)
         agent.train(batch)
         state = next_state
         episode_reward += reward
@@ -116,36 +89,3 @@ plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.legend()
 plt.show()
-# ####### GLOBAL VARIABLES #######################################################
-#
-# total_reward = 0
-# episode_reward = 0
-# success = 0
-#
-# state = env.reset()
-# for ep in range(1,EPISODES+1):
-#     state = env.reset()
-#     if ep % SHOW_PROGRESS == 0 and ep != 0:
-#         print("| Episode: {}\t| Reward: {}".format(ep,episode_reward))
-#     for t in range(TIMESTEPS):
-#         env.render()
-#         next_state, reward, _, _ = env.step(random.choice(slicer.discrete_actions))
-#         # next_state,reward,_,_ = env.step(-2)
-#         print("env state",env.state)
-#         #print("normalize function:",angle_normalize(env.state[0]))
-#         if reward == 1:
-#             episode_reward += 1
-#             success += 1
-#             break
-#         state = next_state
-#     total_reward += episode_reward
-#     episode_reward = 0
-# print("Total reward over all episodes: {}\t| Success rate: {:.2f}%".format(total_reward,(success/EPISODES)*100))
-#
-
-
-
-def my_reward():
-    r = 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else state[0]*1
-    print(r)
-    return r

@@ -48,8 +48,8 @@ class PendulumEnv(gym.Env):
                         if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.1:
                             return 50
                         else:
-                            return (1-np.abs(angle_normalize(pendulum.state[0])))*1
-
+                            # return (1-np.abs(angle_normalize(pendulum.state[0])))*1
+                            return -100
         self.reward = my_reward
         print(self.reward)
 
