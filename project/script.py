@@ -40,7 +40,7 @@ AUTO_SAVER = 50
 SHOW_PROGRESS = 10
 # def: 2000
 TIMESTEPS = 1000
-BATCH_SIZE = 1
+BATCH_SIZE = 32
 
 list_episode_reward = []
 for ep in range(TRAINING_EPISODES):
