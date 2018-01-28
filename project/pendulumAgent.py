@@ -18,7 +18,7 @@ class DankAgent():
         self.gamma = 0.95
         self.epsilon = 1.0
         self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.0015 #def for 30000 ep: 0.00015
+        self.eps_decay_rate = 0.001 #def for 30000 ep: 0.00015
         self.learning_rate = 0.001 #def: 0.001
         self.decay_const = 0.1
         self.model = self._build_model()
@@ -49,6 +49,7 @@ class DankAgent():
         self.target_model.set_weights(self.model.get_weights())
 
     def act(self, state, en_explore = True):
+
         if random.random() <= self.epsilon and en_explore:
             # action = random.choice(self.disc_actions)==self.disc_actions
             action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
@@ -65,20 +66,23 @@ class DankAgent():
 
     # def train(self,state, action, next_state, reward, done):
     def train(self, batch):
-        state, action, reward, next_state, done = batch
-        state = state.reshape((1,2))
-        next_state = next_state.reshape((1,2))
+        for state, action, reward, next_state, done in batch:
+            # state, action, reward, next_state, done = batch
+            state = state.reshape((1,2))
+            # print(next_state)
+            next_state = next_state.reshape((1,2))
 
-        target = self.model.predict(state)
-        if done:
-            target[0][action] = reward
-        else:
-            a = self.model.predict(next_state)[0]
-            t = self.target_model.predict(next_state)[0]
 
-            target[0][action] = reward + self.gamma * t[np.argmax(a)]
+            target = self.model.predict(state)
+            if done:
+                target[0][action] = reward
+            else:
+                a = self.model.predict(next_state)[0]
+                t = self.target_model.predict(next_state)[0]
 
-        self.history = self.model.fit(state, target, epochs=1, verbose=0)
+                target[0][action] = reward + self.gamma * t[np.argmax(a)]
+
+            self.history = self.model.fit(state, target, epochs=1, verbose=0)
 
 
     def load(self, file_name):

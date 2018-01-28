@@ -40,6 +40,7 @@ AUTO_SAVER = 50
 SHOW_PROGRESS = 10
 # def: 2000
 TIMESTEPS = 1000
+BATCH_SIZE = 1
 
 list_episode_reward = []
 for ep in range(TRAINING_EPISODES):
@@ -50,6 +51,7 @@ for ep in range(TRAINING_EPISODES):
     state = np.array((state[0],state[2]))
     state = np.round(state,2)
     episode_reward = 0
+
     for t in range(TIMESTEPS):
         if ep % SHOW_PROGRESS == 0 and ep != 0:
             env.render()
@@ -59,19 +61,25 @@ for ep in range(TRAINING_EPISODES):
         action = agent.act(state, True)[0]
 
 
-        next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+        next_state, reward, done , _ = env.step(agent.discrete_actions[action], state[1])
         next_state = np.array((next_state[0],next_state[2]))
         next_state = np.round(next_state,2)
 
         if len(memory) == MEMORY_SIZE:
             memory.pop(0)
         memory.append((state, action, reward, next_state, done))
-        batch = random.choice(memory)
-        agent.train(batch)
+
+
+        if ep > 1:
+            batch = random.sample(memory, BATCH_SIZE)
+            agent.train(batch)
+        else:
+            batch = random.choice(memory)
+
         state = next_state
         episode_reward += reward
-    print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| Loss: {:.4f}\t| epsilon: {:.2f}\t|buffer: {}".format(ep, TRAINING_EPISODES,t,episode_reward,
-            agent.history.history['loss'][0],agent.epsilon,len(memory)))
+    print("Episode {}/{}\t| Step: {}\t| Reward: {:.4f}\t| epsilon: {:.2f}\t|buffer: {}".format(ep, TRAINING_EPISODES,t,episode_reward,
+            agent.epsilon,len(memory)))
 
         # print("Episode {}/{}\t| Step: {}\t| Reward: {}\t".format(ep, TRAINING_EPISODES,t,episode_reward))
     agent.epsilon = agent.init_epsilon*np.exp(-agent.eps_decay_rate*ep)+agent.decay_const

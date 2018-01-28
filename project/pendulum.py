@@ -34,22 +34,23 @@ class PendulumEnv(gym.Env):
         #     self.reward = reward
         # else:
 
-        def my_reward(pendulum):
+        def my_reward(pendulum, velocity):
             if self.cnt == 0:
                 print("test")
                 return 0
             else:
-                if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.025:
-                    return 10
+                if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025 and np.abs(velocity) < 2.0:
+                    return 10-np.abs(velocity)
                 else:
-                    if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05:
-                        return 20
+                    if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05 and np.abs(velocity) < 2.0:
+                        return 20-np.abs(velocity)
                     else:
-                        if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.1:
-                            return 50
+                        if -0.01 <= angle_normalize(pendulum.state[0]) <= 0.1 and np.abs(velocity) < 2.0:
+                            return 50-np.abs(velocity)
                         else:
                             # return (1-np.abs(angle_normalize(pendulum.state[0])))*1
-                            return -100
+                            # print(velocity)
+                            return -10
         self.reward = my_reward
         print(self.reward)
 
@@ -57,7 +58,7 @@ class PendulumEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def step(self,u):
+    def step(self,u, velocity):
         th, thdot = self.state
 
         g = 10.
@@ -71,7 +72,7 @@ class PendulumEnv(gym.Env):
         newth = th + newthdot*dt
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
 
-        reward = self.reward(self)
+        reward = self.reward(self, velocity)
 
         self.state = np.array([newth, newthdot])
 
