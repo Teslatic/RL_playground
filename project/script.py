@@ -39,7 +39,7 @@ TRAINING_EPISODES = 3000
 AUTO_SAVER = 50
 SHOW_PROGRESS = 10
 # def: 2000
-TIMESTEPS = 1000
+TIMESTEPS = 1500
 BATCH_SIZE = 32
 
 list_episode_reward = []
@@ -61,7 +61,7 @@ for ep in range(TRAINING_EPISODES):
         action = agent.act(state, True)[0]
 
 
-        next_state, reward, done , _ = env.step(agent.discrete_actions[action], state[1])
+        next_state, reward, done , _ = env.step(agent.discrete_actions[action])
         next_state = np.array((next_state[0],next_state[2]))
         next_state = np.round(next_state,2)
 

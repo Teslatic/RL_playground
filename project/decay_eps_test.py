@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 epsilon = 1.0
-decay_rate = 0.001
+decay_rate = 0.0008
 episodes = 3000
 const = 0.2
 init_eps = epsilon-const

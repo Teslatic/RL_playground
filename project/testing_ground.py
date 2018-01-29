@@ -95,6 +95,24 @@ def _discretize_actions(self):
     print("|---------------------------------------------------------------|")
     return self.discrete_actions
 
+def sample_minibatch(self, batch_size=None):
+    if batch_size is None:
+        batch_size = self.batch_size
+    state      = np.zeros((self.batch_size, self.state_siz*self.hist_len), dtype=np.float32)
+    action     = np.zeros((self.batch_size, self.act_num), dtype=np.float32)
+    next_state = np.zeros((self.batch_size, self.state_siz*self.hist_len), dtype=np.float32)
+    reward     = np.zeros((self.batch_size, 1), dtype=np.float32)
+    terminal   = np.zeros((self.batch_size, 1), dtype=np.float32)
+    for i in range(batch_size):
+        index = np.random.randint(self.bottom, self.bottom + self.size)
+        state[i]         = self.states.take(index, axis=0, mode='wrap')
+        action[i]        = self.actions.take(index, axis=0, mode='wrap')
+        next_state[i]    = self.next_states.take(index, axis=0, mode='wrap')
+        reward[i]        = self.rewards.take(index, axis=0, mode='wrap')
+        terminal[i]      = self.terminal.take(index, axis=0, mode='wrap')
+    return state, action, next_state, reward, terminal
+
+
 
 for ep in range(TRAINING_EPISODES):
     if ep % AUTO_SAVER == 0 and nepisodes != 0:

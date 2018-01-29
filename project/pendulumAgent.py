@@ -18,7 +18,7 @@ class DankAgent():
         self.gamma = 0.95
         self.epsilon = 1.0
         self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.001 #def for 30000 ep: 0.00015
+        self.eps_decay_rate = 0.0008 #def for 30000 ep: 0.00015
         self.learning_rate = 0.001 #def: 0.001
         self.decay_const = 0.1
         self.model = self._build_model()
@@ -35,13 +35,13 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(1024,input_shape = (2,),activation = 'relu'))
+        model.add(Dense(128,input_shape = (2,),activation = 'relu'))
         model.add(Dropout(0.5))
         # model.add(Dense(2048, activation = 'relu'))
         # model.add(Dropout(0.5))
-        model.add(Dense(512, activation = 'relu'))
+        model.add(Dense(256, activation = 'relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(int(self.ticks)))
+        model.add(Dense(int(self.ticks), activation = 'linear' ))
         model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
@@ -82,7 +82,7 @@ class DankAgent():
 
                 target[0][action] = reward + self.gamma * t[np.argmax(a)]
 
-            self.history = self.model.fit(state, target, epochs=1, verbose=0)
+        self.model.fit(state, target, epochs=1, verbose=0)
 
 
     def load(self, file_name):
