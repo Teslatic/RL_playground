@@ -11,7 +11,7 @@ class PendulumEnv(gym.Env):
         'video.frames_per_second' : 1
     }
 
-    def __init__(self, reward_function=None):
+    def __init__(self, reward_function=0):
         self.max_speed=8
         self.max_torque=2.
         self.dt=.05
@@ -22,44 +22,40 @@ class PendulumEnv(gym.Env):
         self.observation_space = spaces.Box(low=-high, high=high)
 
         self._seed()
-        #
-        # if reward_function is not None:
-        #     def reward(pendulum):
-        #         # return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
-        #         if self.cnt==0:
-        #             return 0
-        #         else:
-        #             return 10 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else (1-np.abs(angle_normalize(pendulum.state[0])))*1
-        #
-        #     self.reward = reward
-        # else:
 
-        def my_reward(pendulum):
-            if self.cnt == 0:
-                print("test")
-                return 0
-            else:
-                if -0.17 <= angle_normalize(pendulum.state[0]) <= 0.17:
-                    if np.abs(pendulum.state[1]) > 2:
-                        return 0
-                    else:
-                        return 100*(2-np.abs(pendulum.state[1]))
+        if reward_function == 0:
+            self.reward_fn_string = "Binary Reward"
+            def reward(pendulum):
+                return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
+            self.reward = reward
+        else:
+            self.reward_fn_string = "Heuristic Reward"
+            def my_reward(pendulum):
+                if self.cnt == 0:
+                    print("test")
+                    return 0
                 else:
-                    return (-1 * np.abs(angle_normalize(pendulum.state[0])))
+                    if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1:
+                        if np.abs(pendulum.state[1]) > 1:
+                            return 0
+                        else:
+                            return 100*(1-np.abs(pendulum.state[1]))
+                    else:
+                        return (-1 * np.abs(angle_normalize(pendulum.state[0])))
 
-                #if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025 and np.abs(velocity) < 2.0:
-                #    return 10-np.abs(velocity)
-                #else:
-                #    if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05 and np.abs(velocity) < 2.0:
-                #        return 20-np.abs(velocity)
-                #    else:
-                #        if -0.01 <= angle_normalize(pendulum.state[0]) <= 0.1 and np.abs(velocity) < 2.0:
-                #            return 50-np.abs(velocity)
-                #        else:
-                            # return (1-np.abs(angle_normalize(pendulum.state[0])))*1
-                            # print(velocity)
-                #            return -10
-        self.reward = my_reward
+                    #if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025 and np.abs(velocity) < 2.0:
+                    #    return 10-np.abs(velocity)
+                    #else:
+                    #    if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05 and np.abs(velocity) < 2.0:
+                    #        return 20-np.abs(velocity)
+                    #    else:
+                    #        if -0.01 <= angle_normalize(pendulum.state[0]) <= 0.1 and np.abs(velocity) < 2.0:
+                    #            return 50-np.abs(velocity)
+                    #        else:
+                                # return (1-np.abs(angle_normalize(pendulum.state[0])))*1
+                                # print(velocity)
+                    #            return -10
+            self.reward = my_reward
         print(self.reward)
 
     def _seed(self, seed=None):

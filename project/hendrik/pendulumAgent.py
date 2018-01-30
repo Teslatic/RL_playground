@@ -5,25 +5,30 @@ import numpy as np
 import keras
 from collections import deque
 from keras.models import Sequential
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from keras import backend as K
 from keras.layers import Flatten,Dense, Dropout
 import datetime
 
 class DankAgent():
-    def __init__(self,action_interval, input_shape):
+    def __init__(self,action_interval, input_shape, batch_size):
         self.input_shape = input_shape
         self.action_interval = action_interval
-        self.step_length = 0.1 #def: 0.1
+        self.batch_size = batch_size
+        self.step_length = 0.05 #def: 0.1
         self.disc_actions = self._discretize_actions()
-        self.gamma = 0.95
+        self.gamma = 0.9
         self.epsilon = 1.0
         self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.0008 #def for 30000 ep: 0.00015
+        self.eps_decay_rate = 0.0005# 0.0006  0.00008 #def for 30000 ep: 0.00015
         self.learning_rate = 0.001 #def: 0.001
         self.decay_const = 0.1
         self.model = self._build_model()
         self.target_model = self._build_model()
+        self.cnt = 0
+        self.train_marker = 1
+        self.update_target_marker = 1
+
 
     def _discretize_actions(self):
         self.ticks = (np.abs(self.action_interval[0]) + np.abs(self.action_interval[-1])) / self.step_length
@@ -36,14 +41,18 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(8,input_shape = (self.input_shape,),activation = 'relu'))
-        #model.add(Dropout(0.5))
-        # model.add(Dense(2048, activation = 'relu'))
-        # model.add(Dropout(0.5))
-        model.add(Dense(32, activation = 'relu'))
-        #model.add(Dropout(0.5))
+        model.add(Dense(20,input_shape = (self.input_shape,),activation = 'relu'))
+        model.add(Dense(20, activation = 'relu'))
         model.add(Dense(int(self.ticks), activation = 'linear' ))
-        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+        model.compile(loss = 'mse', optimizer = RMSprop(lr = self.learning_rate))
+        return model
+
+    def _build_target_model(self):
+        model = Sequential()
+        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu'))
+        model.add(Dense(64, activation = 'relu'))
+        model.add(Dense(int(self.ticks), activation = 'linear' ))
+        model.compile(loss = 'mse', optimizer = RMSprop(lr = self.learning_rate))
         return model
 
     def update_target_model(self):
@@ -65,25 +74,56 @@ class DankAgent():
 
         return action
 
-    # def train(self,state, action, next_state, reward, done):
-    def train(self, batch):
-        for state, action, reward, next_state, done in batch:
-            # state, action, reward, next_state, done = batch
-            state = state.reshape((1,self.input_shape))
-            # print(next_state)
-            next_state = next_state.reshape((1,self.input_shape))
+    # def train(self,state, action, reward, next_state, done):
+    def train(self, batch, memory):
+
+        state_batch = np.array([x[0] for x in batch])
+        action_batch = np.array([x[1] for x in batch])
+        reward_batch = np.array([x[2] for x in batch])
+        next_state_batch = np.array([x[3] for x in batch])
+        done_batch = np.array([x[4] for x in batch])
 
 
-            target = self.model.predict(state)
-            if done:
-                target[0][action] = reward
-            else:
-                a = self.model.predict(next_state)[0]
-                t = self.target_model.predict(next_state)[0]
+        q_target = self.model.predict(state_batch, batch_size = self.batch_size)
 
-                target[0][action] = reward + self.gamma * t[np.argmax(a)]
 
-        self.model.fit(state, target, epochs=1, verbose=0)
+        a = self.model.predict(next_state_batch, batch_size = self.batch_size)
+        t = self.target_model.predict(next_state_batch, batch_size = self.batch_size)
+        # print("q_target shape: ",q_target.shape)
+        # print("reward batch shape: ",reward_batch.shape)
+        # print("action prediction shape: ", a.shape)
+        # print("target model predictions: ", t.shape)
+        for idx,action in enumerate(action_batch):
+            # print(q_target[idx][action])
+            q_target[idx][action] = reward_batch[idx] + self.gamma * t[idx][np.argmax(a[idx][action])]
+        # print(q_target.shape)
+        # print(action_batch)
+        # print("q targets:", q_target)
+        # print("a predictions",a)
+        # print("t predictions",t)
+        # for state, action, reward, next_state, done in batch:
+        #     # state, action, reward, next_state, done = batch
+        #     state = state.reshape((1,self.input_shape))
+        #     # print(next_state)
+        #     next_state = next_state.reshape((1,self.input_shape))
+        #
+        #
+        #     target = self.model.predict(state)
+        #
+        #     a = self.model.predict(next_state)[0]
+        #     print(a)
+        #     t = self.target_model.predict(next_state)[0]
+        #
+        #     target[0][action] = reward + self.gamma * t[np.argmax(a)]
+        if self.cnt % self.train_marker == 0:
+            # self.model.fit(state, target,  epochs=1, verbose=0)
+            self.model.train_on_batch(state_batch, q_target)
+            # print("updated")
+
+
+
+        self.cnt += 1
+
 
 
     def load(self, file_name):
