@@ -30,7 +30,7 @@ def print_setup():
 
 ######## CONSTANTS ############################################################
 #def: 50000
-MEMORY_SIZE = 80000
+MEMORY_SIZE = 800#0#0
 memory = []
 #def: 30000
 TRAINING_EPISODES = 3000
@@ -102,8 +102,11 @@ for ep in range(TRAINING_EPISODES):
         #next_state = np.array((next_state[0],next_state[2]))
         next_state = np.round(next_state,2)
 
+
+
         if len(memory) == MEMORY_SIZE:
             memory.pop(0)
+
         memory.append(np.array((state, action, reward, next_state, done)))
 
 
