@@ -30,7 +30,7 @@ def print_setup():
 
 ######## CONSTANTS ############################################################
 #def: 50000
-MEMORY_SIZE = 30000
+MEMORY_SIZE = 80000
 memory = []
 #def: 30000
 TRAINING_EPISODES = 3000
@@ -38,7 +38,7 @@ AUTO_SAVER = 50
 SHOW_PROGRESS = 25
 # def: 2000
 TIMESTEPS = 500
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 
 ####### INTIALISATION ##########################################################
@@ -75,8 +75,12 @@ for ep in range(TRAINING_EPISODES):
 
         next_state, reward, done , _ = env.step(agent.discrete_actions[action])
         next_state = np.round(next_state,2)
-
         memory.append((state, action, reward, next_state, done))
+
+        if len(memory) > BATCH_SIZE:
+            batch = random.sample(memory, BATCH_SIZE)
+            agent.train(batch,memory)
+
         state = next_state
         #print(len(memory))
     if ep < 1:

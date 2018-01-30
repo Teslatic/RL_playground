@@ -18,13 +18,13 @@ class DankAgent():
         self.step_length = 0.05 #def: 0.1
         self.disc_actions = self._discretize_actions()
         self.gamma = 0.9
-        self.epsilon = 1.0
-        self.init_epsilon = 0.9
-        self.eps_decay_rate = 0.0005# 0.0006  0.00008 #def for 30000 ep: 0.00015
-        self.learning_rate = 0.001 #def: 0.001
-        self.decay_const = 0.1
+        self.epsilon = 1
+        self.init_epsilon = 0.3
+        self.eps_decay_rate = 0.04# 0.0006  0.00008 #def for 30000 ep: 0.00015
+        self.learning_rate = 0.0001 #def: 0.001
+        self.decay_const = 0.0
         self.model = self._build_model()
-        self.target_model = self._build_model()
+        self.target_model = self._build_target_model()
         self.cnt = 0
         self.train_marker = 1
         self.update_target_marker = 1
@@ -41,10 +41,10 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(20,input_shape = (self.input_shape,),activation = 'relu'))
-        model.add(Dense(20, activation = 'relu'))
+        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu'))
+        model.add(Dense(64, activation = 'relu'))
         model.add(Dense(int(self.ticks), activation = 'linear' ))
-        model.compile(loss = 'mse', optimizer = RMSprop(lr = self.learning_rate))
+        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
     def _build_target_model(self):
@@ -52,7 +52,7 @@ class DankAgent():
         model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu'))
         model.add(Dense(64, activation = 'relu'))
         model.add(Dense(int(self.ticks), activation = 'linear' ))
-        model.compile(loss = 'mse', optimizer = RMSprop(lr = self.learning_rate))
+        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
     def update_target_model(self):
@@ -60,10 +60,16 @@ class DankAgent():
 
     def act(self, state, en_explore = True):
 
-        if random.random() <= self.epsilon and en_explore:
+
+        pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+
+        # if random.random() <= self.epsilon and en_explore:
+        if pick == 'random':
+            # print(pick)
             # action = random.choice(self.disc_actions)==self.disc_actions
             action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
         else:
+            # print(pick)
             state = state.reshape((1,self.input_shape))
             action_values = self.model.predict(state)
 
@@ -75,7 +81,7 @@ class DankAgent():
         return action
 
     # def train(self,state, action, reward, next_state, done):
-    def train(self, batch, memory):
+    def train(self, batch, memory, en_explore = False):
 
         state_batch = np.array([x[0] for x in batch])
         action_batch = np.array([x[1] for x in batch])
@@ -115,7 +121,7 @@ class DankAgent():
         #     t = self.target_model.predict(next_state)[0]
         #
         #     target[0][action] = reward + self.gamma * t[np.argmax(a)]
-        if self.cnt % self.train_marker == 0:
+        if self.cnt % self.train_marker == 0 and en_explore == False:
             # self.model.fit(state, target,  epochs=1, verbose=0)
             self.model.train_on_batch(state_batch, q_target)
             # print("updated")
