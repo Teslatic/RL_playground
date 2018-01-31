@@ -26,8 +26,8 @@ class DankAgent():
         self.model = self._build_model()
         self.target_model = self._build_target_model()
         self.cnt = 1
-        self.train_marker = 20
-        self.update_target_marker = 1
+        self.train_marker = 1
+        self.update_target_marker = 20
 
 
     def _discretize_actions(self):
@@ -71,25 +71,17 @@ class DankAgent():
         if en_explore == True:
             pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
 
-            # if random.random() <= self.epsilon and en_explore:
             if pick == 'random':
-                # print(pick)
-                # action = random.choice(self.disc_actions)==self.disc_actions
                 action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
             else:
-                # print(pick)
                 state = state.reshape((1,self.input_shape))
                 action_values = self.model.predict(state)
-
-                # print("action values",action_values)
-                # print("greedy pick from action values",np.argmax(action_values[0]))
                 action = np.array((np.argmax(action_values),))
-                # print("discrete actions", self.discrete_actions)
         else:
-            state = state.reshape((1,self.input_shape))
+            state = state.reshape((1,3))
             action_values = self.model.predict(state)
             action = np.array((np.argmax(action_values),))
-            print(action)
+
         return action
 
     # def train(self,state, action, reward, next_state, done):
@@ -100,7 +92,6 @@ class DankAgent():
         reward_batch = np.array([x[2] for x in batch])
         next_state_batch = np.array([x[3] for x in batch])
         done_batch = np.array([x[4] for x in batch])
-
 
         q_target = self.model.predict(state_batch, batch_size = self.batch_size)
 
@@ -133,12 +124,13 @@ class DankAgent():
         #     t = self.target_model.predict(next_state)[0]
         #
         #     target[0][action] = reward + self.gamma * t[np.argmax(a)]
+        # self.model.fit(state, target,  epochs=1, verbose=0)
+
         if self.cnt % self.train_marker == 0 and en_explore == False:
-            # self.model.fit(state, target,  epochs=1, verbose=0)
             self.model.train_on_batch(state_batch, q_target)
-            # print("updated")
 
-
+        if self.cnt % self.update_target_marker == 0 and en_explore == False:
+            self.update_target_model()
 
         self.cnt += 1
 

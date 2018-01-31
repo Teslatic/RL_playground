@@ -19,46 +19,64 @@ def print_timestamp(string = ""):
 def print_setup():
     print("---------------------------------------------------------------------------------")
     print("| Setup: \t\t\t\t\t\t\t\t\t|")
-    print("| Memory fill:\t\t\t{}\t\tBatch Size:\t\t{}\t|".format(
+    print("| Memory fill:\t\t\t{}\t\tBatch: {}\t|".format(
     MEMORY_FILL, BATCH_SIZE ,  agent.init_epsilon))
     print("| Discount: \t\t\t{}\t\tEpsilon constant: \t{}\t|".format(agent.gamma,agent.decay_const ))
     print("| Start Epsilon:\t\t{}\t\tEpsilon decay rate:\t{}\t|".format(
-    agent.init_epsilon, agent.eps_decay_rate ))
+    agent.init_epsilon+agent.decay_const, agent.eps_decay_rate ))
     print("| Learning rate:\t\t{}\t\tUpdate rate model:\t{}\t|".format(
     agent.learning_rate, agent.train_marker ))
     print("| Reward function:\t\t{}\tTimesteps:\t\t{}\t|".format(env.reward_fn_string, TIMESTEPS))
     print("| Update rate target model \t{}\t\tEpisodes:\t\t{}\t|".format(agent.update_target_marker, TRAINING_EPISODES))
     print("---------------------------------------------------------------------------------")
 
+
+def test_run(agent):
+    test_reward_list = []
+    for i in range(TESTS):
+        test_episode_reward = 0
+        env.seed(i)
+        state = env.reset()
+        state = state.reshape((1,3))
+        for _ in range(500):
+
+            action = agent.act(state, False)[0]
+            next_state, reward, done, _ = env.step(agent.discrete_actions[action], True)
+            next_state = np.round(next_state,2)
+
+            state = next_state
+            test_episode_reward += reward
+        test_reward_list.append(test_episode_reward)
+    avg_test_reward = np.mean(test_reward_list)
+    print("\naverage reward: {}".format(avg_test_reward))
+    return avg_test_reward
+
+
 ######## CONSTANTS ############################################################
 #def: 50000
 MEMORY_SIZE = 8000000
-MEMORY_FILL = 8000
+MEMORY_FILL = 800#0
 memory = []
 #def: 30000
-TRAINING_EPISODES = 500
+TRAINING_EPISODES = 5#00
 AUTO_SAVER = 50
 SHOW_PROGRESS = 25
 # def: 2000
-TIMESTEPS = 1000
-BATCH_SIZE = 128
+TIMESTEPS = 500
+BATCH_SIZE = [32, 64, 128, 256, 512]
 RUNS = 5
-
+TEST_PROGRESS = 1
+TESTS = 1
 
 ####### INTIALISATION ##########################################################
 weights_file = "network.h5"
-
-
 input_shape = 3
-load_existent_model = False
-env = PendulumEnv(reward_function = 1)
-agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE)
-
-if load_existent_model:
-    agent.load(weights_file)
+env = PendulumEnv()
+agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[0])
 agent.model.summary()
 agent.model.save_weights('model_init_weights.h5')
 agent.target_model.save_weights('target_model_init_weights.h5')
+
 
 nepisodes = 0
 nepisodes = 0
@@ -67,22 +85,24 @@ list_acc_reward = [[] for _ in range(RUNS)]
 list_episode_reward = [[] for _ in range(RUNS)]
 
 list_epsilon = [[] for _ in range(RUNS)]
-list_time = []
+list_avg_reward = [[] for _ in range(RUNS)]
 
+list_time = []
 
 print_setup()
 
 for run in range(RUNS):
-
-
     # resetting the agent
+
+    env = PendulumEnv()
+    agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[run])
     acc_reward = 0
     memory = []
     agent.model.load_weights('model_init_weights.h5')
     agent.target_model.load_weights('target_model_init_weights.h5')
-    agent.q_target = np.zeros((512,20))
-    agent.t = np.zeros((512,20))
-    agent.a = np.zeros((512,20))
+    agent.q_target = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
+    agent.t = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
+    agent.a = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
     agent.epsilon = 1.0
 
 
@@ -90,7 +110,7 @@ for run in range(RUNS):
     start_time = time.time()
 
     for ep in range(TRAINING_EPISODES):
-        if ep+1 % AUTO_SAVER == 0 and nepisodes != 0:
+        if (ep+1) % AUTO_SAVER == 0 and nepisodes != 0:
             print_timestamp("saved")
             str_status = 'saved'
             agent.save(weights_file)
@@ -98,18 +118,19 @@ for run in range(RUNS):
         #state = np.array((state[0],state[2]))
         state = np.round(state,2)
         episode_reward = 0
-
+        if (ep+1) % TEST_PROGRESS == 0 and ep != 0:
+            list_avg_reward[run].append(test_run(agent))
         if ep < 1:
             print("filling memory")
         while len(memory) < MEMORY_FILL and ep < 1:
             action = agent.act(state, True)[0]
 
-            next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+            next_state, reward, done , _ = env.step(agent.discrete_actions[action], False)
             next_state = np.round(next_state,2)
             memory.append((state, action, reward+10*run, next_state, done))
 
-            if len(memory) > BATCH_SIZE:
-                batch = random.sample(memory, BATCH_SIZE)
+            if len(memory) > BATCH_SIZE[run]:
+                batch = random.sample(memory, BATCH_SIZE[run])
                 agent.train(batch,memory)
 
             state = next_state
@@ -118,7 +139,7 @@ for run in range(RUNS):
             print("memory filled with {} samples".format(MEMORY_FILL))
 
         for t in range(TIMESTEPS):
-            if ep % SHOW_PROGRESS == 0 and ep != 0 and len(memory) >= MEMORY_FILL:
+            if (ep+1) % SHOW_PROGRESS == 0 and ep != 0 and len(memory) >= MEMORY_FILL:
                 env.render()
                 sys.stdout.flush()
                 # print("\rRendering episode {}/{}".format(ep,TRAINING_EPISODES),end="")
@@ -129,7 +150,7 @@ for run in range(RUNS):
             action = agent.act(state, True)[0]
             #print(state)
 
-            next_state, reward, done , _ = env.step(agent.discrete_actions[action])
+            next_state, reward, done , _ = env.step(agent.discrete_actions[action], False)
             #next_state = np.array((next_state[0],next_state[2]))
             next_state = np.round(next_state,2)
 
@@ -141,8 +162,8 @@ for run in range(RUNS):
             memory.append(np.array((state, action, reward, next_state, done)))
 
 
-            if len(memory) >= BATCH_SIZE:
-                batch = random.sample(memory, BATCH_SIZE)
+            if len(memory) >= BATCH_SIZE[run]:
+                batch = random.sample(memory, BATCH_SIZE[run])
 
                 agent.train(batch,memory)
             else:
@@ -158,7 +179,6 @@ for run in range(RUNS):
                 agent.epsilon,str_status),end="")
         sys.stdout.flush()
 
-            # print("Episode {}/{}\t| Step: {}\t| Reward: {}\t".format(ep, TRAINING_EPISODES,t,episode_reward))
         agent.epsilon = agent.init_epsilon*np.exp(-agent.eps_decay_rate*ep)+agent.decay_const
 
 
@@ -166,10 +186,6 @@ for run in range(RUNS):
         list_acc_reward[run].append(acc_reward)
         list_epsilon[run].append(agent.epsilon)
 
-
-        nepisodes += 1
-        if agent.cnt % agent.update_target_marker == 0:
-            agent.update_target_model()
 
     print("\n")
     end_time = time.time()
@@ -207,10 +223,24 @@ for run in range(RUNS):
     # plt.title("Accumulated Reward over Time (Smoothed over window size {})".format(smoothing_window))
     # fig3.savefig('acc_reward.png')
 
+plt.figure()
+for i in range(RUNS):
+    plt.plot(list_avg_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
+plt.plot(np.mean(list_avg_reward,axis=0), label = 'mean')
+plt.plot(np.mean(list_avg_reward,axis=0)+np.std(list_acc_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
+plt.plot(np.mean(list_avg_reward,axis=0)-np.std(list_acc_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
+plt.title("Avg. reward in a intermediate test every {} episodes".format(TEST_PROGRESS))
+plt.xlabel("Test")
+plt.ylabel("Reward")
+plt.legend()
+plt.savefig('avg_test_reward.png')
+
+
+
 
 plt.figure()
 for i in range(RUNS):
-    plt.plot(list_episode_reward[i], label='Run {}'.format(i+1))
+    plt.plot(list_episode_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
 plt.title("Rewards per episode")
 plt.xlabel("Episode")
 plt.ylabel("Reward")
@@ -220,7 +250,7 @@ plt.savefig('reward_per_episode.png')
 
 plt.figure()
 for i in range(RUNS):
-    plt.plot(list_acc_reward[i],label='Run {}'.format(i+1))
+    plt.plot(list_acc_reward[i],label = '{} batch'.format(BATCH_SIZE[i]))
 plt.plot(np.mean(list_acc_reward,axis=0), label = 'mean')
 plt.plot(np.mean(list_acc_reward,axis=0)+np.std(list_acc_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
 plt.plot(np.mean(list_acc_reward,axis=0)-np.std(list_acc_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
