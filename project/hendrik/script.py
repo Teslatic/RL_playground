@@ -54,20 +54,18 @@ def test_run(agent):
 
 
 ######## CONSTANTS ############################################################
-#def: 50000
+
 MEMORY_SIZE = 8000000
-MEMORY_FILL = 800#0
+MEMORY_FILL = 8000
 memory = []
-#def: 30000
-TRAINING_EPISODES = 10#5#00
+TRAINING_EPISODES = 500
 AUTO_SAVER = 50
 SHOW_PROGRESS = 25
-# def: 2000
 TIMESTEPS = 500
 BATCH_SIZE = [32, 64, 128, 256, 512]
 RUNS = 5
-TEST_PROGRESS = 2
-TESTS = 1
+TEST_PROGRESS = 10
+TESTS = 50
 
 ####### INTIALISATION ##########################################################
 weights_file = "network.h5"
@@ -195,35 +193,6 @@ for run in range(RUNS):
     print("Training time: {:.2f} min".format(time_needed))
 
 
-
-
-    #
-    # fig1 = plt.figure(figsize=(10,5))
-    # plt.plot(list_epsilon[run])
-    # plt.xlabel("Episode")
-    # plt.ylabel("Epsilon")
-    # fig1.savefig('decaying_epsilon.png')
-    #
-    # smoothing_window = 10
-    # # Plot the episode reward over time
-    # fig2 = plt.figure(figsize=(10,5))
-    # rewards_smoothed = pd.Series(list_episode_reward[run]).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    # plt.plot(rewards_smoothed)
-    # plt.xlabel("Episode")
-    # plt.ylabel("Episode Reward (Smoothed)")
-    # plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
-    # fig2.savefig('reward.png')
-    #
-    # moothing_window = 10
-    # # Plot the episode reward over time
-    # fig3 = plt.figure(figsize=(10,5))
-    # rewards_smoothed = pd.Series(list_acc_reward[run]).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    # plt.plot(rewards_smoothed)
-    # plt.xlabel("Episode")
-    # plt.ylabel("Episode Reward (Smoothed)")
-    # plt.title("Accumulated Reward over Time (Smoothed over window size {})".format(smoothing_window))
-    # fig3.savefig('acc_reward.png')
-
 plt.figure()
 for i in range(RUNS):
     plt.plot(list_avg_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
@@ -271,3 +240,36 @@ with open('csv_files/batch_sweep/list_acc_reward.csv', 'w+') as csvfile:
 
 
 #plt.show()
+
+
+
+
+### CODE DUMPSTER ##############################################################
+
+
+    #
+    # fig1 = plt.figure(figsize=(10,5))
+    # plt.plot(list_epsilon[run])
+    # plt.xlabel("Episode")
+    # plt.ylabel("Epsilon")
+    # fig1.savefig('decaying_epsilon.png')
+    #
+    # smoothing_window = 10
+    # # Plot the episode reward over time
+    # fig2 = plt.figure(figsize=(10,5))
+    # rewards_smoothed = pd.Series(list_episode_reward[run]).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    # plt.plot(rewards_smoothed)
+    # plt.xlabel("Episode")
+    # plt.ylabel("Episode Reward (Smoothed)")
+    # plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
+    # fig2.savefig('reward.png')
+    #
+    # moothing_window = 10
+    # # Plot the episode reward over time
+    # fig3 = plt.figure(figsize=(10,5))
+    # rewards_smoothed = pd.Series(list_acc_reward[run]).rolling(smoothing_window, min_periods=smoothing_window).mean()
+    # plt.plot(rewards_smoothed)
+    # plt.xlabel("Episode")
+    # plt.ylabel("Episode Reward (Smoothed)")
+    # plt.title("Accumulated Reward over Time (Smoothed over window size {})".format(smoothing_window))
+    # fig3.savefig('acc_reward.png')
