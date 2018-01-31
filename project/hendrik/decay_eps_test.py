@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 epsilon = 1.0
-decay_rate = 0.0004
-episodes = 5000
+decay_rate = 0.01
+episodes = 500
 const = 0.1
 init_eps = epsilon-const
 epsilon = []

@@ -24,24 +24,21 @@ class PendulumEnv(gym.Env):
         self._seed()
 
         if reward_function == 0:
-            self.reward_fn_string = "Binary Reward"
+            self.reward_fn_string = "binary"
             def reward(pendulum):
                 return 1 if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1 else 0
             self.reward = reward
         else:
-            self.reward_fn_string = "Heuristic Reward"
+            self.reward_fn_string = "heuristic"
             def my_reward(pendulum):
-                if self.cnt == 0:
-                    print("test")
-                    return 0
-                else:
-                    if -0.1 <= angle_normalize(pendulum.state[0]) <= 0.1:
-                        if np.abs(pendulum.state[1]) > 1:
-                            return 0
-                        else:
-                            return 100*(1-np.abs(pendulum.state[1]))
+                # print("angle_normalize(pendulum.state[0])")
+                if -0.05 <= angle_normalize(pendulum.state[0]) <= 0.05:
+                    if np.abs(pendulum.state[1]) > 1:
+                        return 0
                     else:
-                        return (-1 * np.abs(angle_normalize(pendulum.state[0])))
+                        return 100*(1-np.abs(pendulum.state[1]))
+                else:
+                    return (-1 * np.abs(angle_normalize(pendulum.state[0])))
 
                     #if -0.025 <= angle_normalize(pendulum.state[0]) <= 0.025 and np.abs(velocity) < 2.0:
                     #    return 10-np.abs(velocity)
@@ -56,7 +53,6 @@ class PendulumEnv(gym.Env):
                                 # print(velocity)
                     #            return -10
             self.reward = my_reward
-        print(self.reward)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -79,6 +75,7 @@ class PendulumEnv(gym.Env):
         reward = self.reward(self)
 
         self.state = np.array([newth, newthdot])
+        # print(angle_normalize(self.state[0]))
 
         return self._get_obs(), reward, False, {}
 

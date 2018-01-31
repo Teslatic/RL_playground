@@ -4,8 +4,8 @@ from time import time
 import numpy as np
 import keras
 from collections import deque
-from keras.models import Sequential
-from keras.optimizers import Adam, RMSprop
+from keras.models import Sequential, load_model
+from keras.optimizers import Adam, RMSprop, Nadam
 from keras import backend as K
 from keras.layers import Flatten,Dense, Dropout
 import datetime
@@ -15,18 +15,18 @@ class DankAgent():
         self.input_shape = input_shape
         self.action_interval = action_interval
         self.batch_size = batch_size
-        self.step_length = 0.05 #def: 0.1
+        self.step_length = 0.2#def: 0.1
         self.disc_actions = self._discretize_actions()
         self.gamma = 0.9
-        self.epsilon = 1
-        self.init_epsilon = 0.3
-        self.eps_decay_rate = 0.04# 0.0006  0.00008 #def for 30000 ep: 0.00015
-        self.learning_rate = 0.0001 #def: 0.001
-        self.decay_const = 0.0
+        self.epsilon = 1.0
+        self.init_epsilon = 0.95
+        self.eps_decay_rate = 0.01# 0.0006  0.00008 #def for 30000 ep: 0.00015
+        self.learning_rate = 0.005 #def: 0.001
+        self.decay_const = 0.05
         self.model = self._build_model()
         self.target_model = self._build_target_model()
-        self.cnt = 0
-        self.train_marker = 1
+        self.cnt = 1
+        self.train_marker = 20
         self.update_target_marker = 1
 
 
@@ -41,17 +41,25 @@ class DankAgent():
 
     def _build_model(self):
         model = Sequential()
-        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu'))
-        model.add(Dense(64, activation = 'relu'))
-        model.add(Dense(int(self.ticks), activation = 'linear' ))
+        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+        # model.add(Dropout(0.5))
+        model.add(Dense(64, activation = 'relu',))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(64, activation = 'relu',))
+        # model.add(Dropout(0.5))
+        model.add(Dense(int(self.ticks), activation = 'linear' ,))
         model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
     def _build_target_model(self):
         model = Sequential()
-        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu'))
-        model.add(Dense(64, activation = 'relu'))
-        model.add(Dense(int(self.ticks), activation = 'linear' ))
+        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+        # model.add(Dropout(0.5))
+        model.add(Dense(64, activation = 'relu',))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(64, activation = 'relu',))
+        # model.add(Dropout(0.5))
+        model.add(Dense(int(self.ticks), activation = 'linear' ,))
         model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
@@ -60,24 +68,28 @@ class DankAgent():
 
     def act(self, state, en_explore = True):
 
+        if en_explore == True:
+            pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
 
-        pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
+            # if random.random() <= self.epsilon and en_explore:
+            if pick == 'random':
+                # print(pick)
+                # action = random.choice(self.disc_actions)==self.disc_actions
+                action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
+            else:
+                # print(pick)
+                state = state.reshape((1,self.input_shape))
+                action_values = self.model.predict(state)
 
-        # if random.random() <= self.epsilon and en_explore:
-        if pick == 'random':
-            # print(pick)
-            # action = random.choice(self.disc_actions)==self.disc_actions
-            action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
+                # print("action values",action_values)
+                # print("greedy pick from action values",np.argmax(action_values[0]))
+                action = np.array((np.argmax(action_values),))
+                # print("discrete actions", self.discrete_actions)
         else:
-            # print(pick)
             state = state.reshape((1,self.input_shape))
             action_values = self.model.predict(state)
-
-            # print("action values",action_values)
-            # print("greedy pick from action values",np.argmax(action_values[0]))
             action = np.array((np.argmax(action_values),))
-            # print("discrete actions", self.discrete_actions)
-
+            print(action)
         return action
 
     # def train(self,state, action, reward, next_state, done):
@@ -139,9 +151,9 @@ class DankAgent():
         self.update_target_model()
 
     def save(self, file_name):
-        print_timestamp()
+        # print_timestamp()
         self.model.save_weights(file_name)
-        print("agent saved weights in file '{}' ".format(file_name))
+        # print("agent saved weights in file '{}' ".format(file_name))
 
 
 def print_timestamp(string = ""):
