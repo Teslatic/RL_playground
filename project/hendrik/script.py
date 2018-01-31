@@ -11,6 +11,7 @@ import time
 import matplotlib.pyplot as plt
 from pendulum import PendulumEnv
 import pandas as pd
+import csv
 
 def print_timestamp(string = ""):
     now = datetime.datetime.now()
@@ -58,14 +59,14 @@ MEMORY_SIZE = 8000000
 MEMORY_FILL = 800#0
 memory = []
 #def: 30000
-TRAINING_EPISODES = 5#00
+TRAINING_EPISODES = 10#5#00
 AUTO_SAVER = 50
 SHOW_PROGRESS = 25
 # def: 2000
 TIMESTEPS = 500
 BATCH_SIZE = [32, 64, 128, 256, 512]
 RUNS = 5
-TEST_PROGRESS = 1
+TEST_PROGRESS = 2
 TESTS = 1
 
 ####### INTIALISATION ##########################################################
@@ -110,7 +111,7 @@ for run in range(RUNS):
     start_time = time.time()
 
     for ep in range(TRAINING_EPISODES):
-        if (ep+1) % AUTO_SAVER == 0 and nepisodes != 0:
+        if (ep+1) % AUTO_SAVER == 0 and ep != 0:
             print_timestamp("saved")
             str_status = 'saved'
             agent.save(weights_file)
@@ -227,16 +228,16 @@ plt.figure()
 for i in range(RUNS):
     plt.plot(list_avg_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
 plt.plot(np.mean(list_avg_reward,axis=0), label = 'mean')
-plt.plot(np.mean(list_avg_reward,axis=0)+np.std(list_acc_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
-plt.plot(np.mean(list_avg_reward,axis=0)-np.std(list_acc_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
+plt.plot(np.mean(list_avg_reward,axis=0)+np.std(list_avg_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
+plt.plot(np.mean(list_avg_reward,axis=0)-np.std(list_avg_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
 plt.title("Avg. reward in a intermediate test every {} episodes".format(TEST_PROGRESS))
 plt.xlabel("Test")
-plt.ylabel("Reward")
+plt.ylabel("Reward (Vanilla)")
 plt.legend()
 plt.savefig('avg_test_reward.png')
-
-
-
+with open('csv_files/batch_sweep/avg_test_reward.csv', 'w+') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
+    writer.writerows(list_avg_reward)
 
 plt.figure()
 for i in range(RUNS):
@@ -246,6 +247,9 @@ plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.legend()
 plt.savefig('reward_per_episode.png')
+with open('csv_files/batch_sweep/reward_per_episode.csv', 'w+') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
+    writer.writerows(list_episode_reward)
 
 
 plt.figure()
@@ -259,4 +263,11 @@ plt.xlabel("Episode")
 plt.ylabel("Accumulated reward")
 plt.legend()
 plt.savefig('acc_reward.png')
-plt.show()
+with open('csv_files/batch_sweep/list_acc_reward.csv', 'w+') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
+    writer.writerows(list_acc_reward)
+
+
+
+
+#plt.show()
