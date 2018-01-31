@@ -60,13 +60,35 @@ agent.model.summary()
 nepisodes = 0
 ######## CONSTANTS ############################################################
 
+def test_run(agent):
+    reward_list = []
+    for i in range(10):
+        episode_reward = 0
+        env.seed(i)
+        state = env.reset()
+        state = state.reshape((1,3))
+        for step in range(500):    
+            #env.render()
+            action = agent.act(state, False)
+            next_state, reward, done , _ = env.step(action_sequence[action])
+            next_state = next_state.reshape((1,3))
+            state = next_state
+            episode_reward += reward
+        reward_list.append(episode_reward)
+    avg_reward = np.mean(reward_list)
+    print("average reward",avg_reward)
+    return avg_reward
+    
+
 MEMORY_SIZE = 50000
 
 batch_size = 32
 batch = []
-TRAINING_EPISODES = 30000
+TRAINING_EPISODES = 1000
 AUTO_SAVER = 25
 SHOW_PROGRESS = 25
+TEST_PROGRESS = 10
+avg_reward_list = []
 
 
 list_episode_reward = []
@@ -79,10 +101,14 @@ for ep in range(TRAINING_EPISODES):
     #env.reset()
     #small_state = env.state()
     episode_reward = 0
+    if ep % TEST_PROGRESS == 0 and ep != 0:
+            avg_reward_list.append(test_run(agent))
+
     for t in range(500):
         if ep % SHOW_PROGRESS == 0 and ep != 0:
             env.render()
             action = agent.act(state, False)
+            #avg_reward_list.append(test_run(agent))
         else:
             action = agent.act(state, True)
 
@@ -133,6 +159,13 @@ plt.plot(list_episode_reward,label = "DankAgent")
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.legend()
+
+plt.figure()
+plt.plot(avg_reward_list,label = "DankAgent")
+plt.xlabel("Episode")
+plt.ylabel("Average Test Reward")
+plt.legend()
+
 plt.show()
 
 
