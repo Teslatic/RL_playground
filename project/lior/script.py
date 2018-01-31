@@ -70,7 +70,7 @@ def test_run(agent):
         for step in range(500):    
             #env.render()
             action = agent.act(state, False)
-            next_state, reward, done , _ = env.step(action_sequence[action])
+            next_state, reward, done , _ = env.step(action_sequence[action], True)
             next_state = next_state.reshape((1,3))
             state = next_state
             episode_reward += reward
@@ -118,7 +118,6 @@ for ep in range(TRAINING_EPISODES):
         print("env state",env.state)
         print("normalize function:",angle_normalize(env.state[0]))
         print("reward", reward)'''
-        #print("action", action)
         #print("agent.discrete_actions[action]", agent.discrete_actions[action])
         '''if len(memory) == agent.memory_size:
             memory.pop(0)
