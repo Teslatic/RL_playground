@@ -37,7 +37,7 @@ parser.add_argument("-w", "--weights", help=".h5 weights_file_name for conv netw
                     default="network.h5")
 args = parser.parse_args()
 weights_file_name = args.weights
-test_agent.load("network.h5")
+test_agent.load("eval_network.h5")
 list_episode_reward = []
 
 TESTING_EPISODES = 10
