@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from pendulum import PendulumEnv
 import pandas as pd
 import csv
+import keras
+
 
 def print_timestamp(string = ""):
     now = datetime.datetime.now()
@@ -59,23 +61,26 @@ MEMORY_SIZE = 8000000
 MEMORY_FILL = 8000
 memory = []
 TRAINING_EPISODES = 500
-AUTO_SAVER = 50
+AUTO_SAVER = 1#50
 SHOW_PROGRESS = 25
 TIMESTEPS = 500
-BATCH_SIZE = [32, 64, 128, 256, 512]
-RUNS = 5
+# BATCH_SIZE = [32, 64, 128, 256, 512]
+BATCH_SIZE = [256]
+RUNS = 1
 TEST_PROGRESS = 10
 TESTS = 50
-
 ####### INTIALISATION ##########################################################
+
+# adjust which network you want to choose for running
+network_setup = ['Vanilla', 'Dropout', 'Deeper', 'Wider', 'DeepWideDrop']
+network_index = 0
+
 weights_file = "network.h5"
 input_shape = 3
-env = PendulumEnv()
-agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[0])
-agent.model.summary()
-agent.model.save_weights('model_init_weights.h5')
-agent.target_model.save_weights('target_model_init_weights.h5')
-
+# env = PendulumEnv()
+# init_weights = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[0],network_setup[network_index])
+# init_weights.model.save_weights('model_init_weights.h5')
+# init_weights.target_model.save_weights('target_model_init_weights.h5')
 
 nepisodes = 0
 nepisodes = 0
@@ -88,17 +93,20 @@ list_avg_reward = [[] for _ in range(RUNS)]
 
 list_time = []
 
-print_setup()
+
 
 for run in range(RUNS):
     # resetting the agent
 
     env = PendulumEnv()
-    agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[run])
+    agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[run], network_setup[network_index])
+    print_setup()
+    agent.model.summary()
+    keras.utils.plot_model(agent.model, to_file='model.png', show_shapes=False, show_layer_names=True, rankdir='TB')
     acc_reward = 0
     memory = []
-    agent.model.load_weights('model_init_weights.h5')
-    agent.target_model.load_weights('target_model_init_weights.h5')
+    # agent.model.load_weights('model_init_weights.h5')
+    # agent.target_model.load_weights('target_model_init_weights.h5')
     agent.q_target = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
     agent.t = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
     agent.a = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
@@ -195,7 +203,7 @@ for run in range(RUNS):
 
 plt.figure()
 for i in range(RUNS):
-    plt.plot(list_avg_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
+    plt.plot(list_avg_reward[i], label='{}'.format(network_setup[network_index]))
 plt.plot(np.mean(list_avg_reward,axis=0), label = 'mean')
 plt.plot(np.mean(list_avg_reward,axis=0)+np.std(list_avg_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
 plt.plot(np.mean(list_avg_reward,axis=0)-np.std(list_avg_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
@@ -203,27 +211,28 @@ plt.title("Avg. reward in a intermediate test every {} episodes".format(TEST_PRO
 plt.xlabel("Test")
 plt.ylabel("Reward (Vanilla)")
 plt.legend()
-plt.savefig('avg_test_reward.png')
-with open('csv_files/batch_sweep/avg_test_reward.csv', 'w+') as csvfile:
+plt.savefig('tmp_pics/avg_test_reward_{}.png'.format(network_setup[network_index]))
+with open('tmp_csv/network_sweep/avg_test_reward_{}.csv'.format(network_setup[network_index]), 'w+') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
     writer.writerows(list_avg_reward)
 
 plt.figure()
 for i in range(RUNS):
-    plt.plot(list_episode_reward[i], label='{} batch'.format(BATCH_SIZE[i]))
+    plt.plot(list_episode_reward[i], label='{}'.format(network_setup[network_index]))
 plt.title("Rewards per episode")
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.legend()
-plt.savefig('reward_per_episode.png')
-with open('csv_files/batch_sweep/reward_per_episode.csv', 'w+') as csvfile:
+plt.savefig('tmp_pics/reward_per_episode.png_{}.png'.format(network_setup[network_index]))
+
+with open('tmp_csv/network_sweep/reward_per_episode_{}.csv'.format(network_setup[network_index]), 'w+') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
     writer.writerows(list_episode_reward)
 
 
 plt.figure()
 for i in range(RUNS):
-    plt.plot(list_acc_reward[i],label = '{} batch'.format(BATCH_SIZE[i]))
+    plt.plot(list_acc_reward[i],label = '{}'.format(network_setup[network_index]))
 plt.plot(np.mean(list_acc_reward,axis=0), label = 'mean')
 plt.plot(np.mean(list_acc_reward,axis=0)+np.std(list_acc_reward), label = 'mean+std. dev.',linestyle = '--', color='pink')
 plt.plot(np.mean(list_acc_reward,axis=0)-np.std(list_acc_reward), label = 'mean-std. dev.',linestyle = '--',color='pink')
@@ -231,8 +240,8 @@ plt.title("Accumulated reward over all episodes")
 plt.xlabel("Episode")
 plt.ylabel("Accumulated reward")
 plt.legend()
-plt.savefig('acc_reward.png')
-with open('csv_files/batch_sweep/list_acc_reward.csv', 'w+') as csvfile:
+plt.savefig('tmp_pics/acc_reward.png_{}.png'.format(network_setup[network_index]))
+with open('tmp_csv/network_sweep/list_acc_reward_{}.csv'.format(network_setup[network_index]), 'w+') as csvfile:
     writer = csv.writer(csvfile, delimiter=',', lineterminator="\n")
     writer.writerows(list_acc_reward)
 

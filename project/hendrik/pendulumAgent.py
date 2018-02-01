@@ -11,7 +11,7 @@ from keras.layers import Flatten,Dense, Dropout
 import datetime
 
 class DankAgent():
-    def __init__(self,action_interval, input_shape, batch_size):
+    def __init__(self,action_interval, input_shape, batch_size, network_setup):
         self.input_shape = input_shape
         self.action_interval = action_interval
         self.batch_size = batch_size
@@ -23,11 +23,13 @@ class DankAgent():
         self.eps_decay_rate = 0.01# 0.0006  0.00008 #def for 30000 ep: 0.00015
         self.learning_rate = 0.005 #def: 0.001
         self.decay_const = 0.05
+        self.setup = network_setup
         self.model = self._build_model()
         self.target_model = self._build_target_model()
         self.cnt = 1
         self.train_marker = 1
         self.update_target_marker = 20
+
 
 
     def _discretize_actions(self):
@@ -40,27 +42,98 @@ class DankAgent():
         return self.discrete_actions
 
     def _build_model(self):
-        model = Sequential()
-        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
-        # model.add(Dropout(0.5))
-        model.add(Dense(64, activation = 'relu',))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(64, activation = 'relu',))
-        # model.add(Dropout(0.5))
-        model.add(Dense(int(self.ticks), activation = 'linear' ,))
-        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+        if self.setup == 'Vanilla':
+            model = Sequential()
+            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+        else:
+            if self.setup == 'Dropout':
+                model = Sequential()
+                model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+                model.add(Dropout(0.5))
+                model.add(Dense(64, activation = 'relu',))
+                model.add(Dropout(0.5))
+                model.add(Dense(int(self.ticks), activation = 'linear' ,))
+                model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+            else:
+                if self.setup == 'Deeper':
+                    model = Sequential()
+                    model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+                    model.add(Dense(64, activation = 'relu',))
+                    model.add(Dense(64, activation = 'relu',))
+                    model.add(Dense(64, activation = 'relu',))
+                    model.add(Dense(int(self.ticks), activation = 'linear' ,))
+                    model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+                else:
+                    if self.setup == 'Wider':
+                        model = Sequential()
+                        model.add(Dense(512,input_shape = (self.input_shape,),activation = 'relu',))
+                        model.add(Dense(1024, activation = 'relu',))
+                        model.add(Dense(int(self.ticks), activation = 'linear' ,))
+                        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+                    else:
+                        if self.setup == 'DeepWideDrop':
+                            model = Sequential()
+                            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+                            model.add(Dropout(0.5))
+                            model.add(Dense(128, activation = 'relu',))
+                            model.add(Dropout(0.5))
+                            model.add(Dense(512, activation = 'relu',))
+                            model.add(Dropout(0.5))
+                            model.add(Dense(256, activation = 'relu',))
+                            model.add(Dropout(0.5))
+                            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+                            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
         return model
 
     def _build_target_model(self):
-        model = Sequential()
-        model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
-        # model.add(Dropout(0.5))
-        model.add(Dense(64, activation = 'relu',))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(64, activation = 'relu',))
-        # model.add(Dropout(0.5))
-        model.add(Dense(int(self.ticks), activation = 'linear' ,))
-        model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+        if self.setup == 'Vanilla':
+            model = Sequential()
+            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+
+        if self.setup == 'Dropout':
+            model = Sequential()
+            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+
+        if self.setup == 'Deeper':
+            model = Sequential()
+            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dense(64, activation = 'relu',))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+
+        if self.setup == 'Wider':
+            model = Sequential()
+            model.add(Dense(512,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dense(1024, activation = 'relu',))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+
+        if self.setup == 'DeepWideDrop':
+            model = Sequential()
+            model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(128, activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(512, activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(256, activation = 'relu',))
+            model.add(Dropout(0.5))
+            model.add(Dense(int(self.ticks), activation = 'linear' ,))
+            model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
+
         return model
 
     def update_target_model(self):
