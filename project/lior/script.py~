@@ -100,8 +100,7 @@ for ep in range(TRAINING_EPISODES):
             avg_reward_list.append(test_run(agent))
 
     for step in range(steps):
-        #if ep % SHOW_PROGRESS == 0 and ep != 0:
-        if False:
+        if ep % SHOW_PROGRESS == 0 and ep != 0:
             env.render()
             action = agent.act(state, False)
         else:
