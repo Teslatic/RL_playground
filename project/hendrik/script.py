@@ -61,7 +61,7 @@ MEMORY_SIZE = 8000000
 MEMORY_FILL = 8000
 memory = []
 TRAINING_EPISODES = 500
-AUTO_SAVER = 1#50
+AUTO_SAVER = 50
 SHOW_PROGRESS = 25
 TIMESTEPS = 500
 # BATCH_SIZE = [32, 64, 128, 256, 512]
@@ -73,9 +73,9 @@ TESTS = 50
 
 # adjust which network you want to choose for running
 network_setup = ['Vanilla', 'Dropout', 'Deeper', 'Wider', 'DeepWideDrop']
-network_index = 0
+network_index = 4
 
-weights_file = "network.h5"
+weights_file = "network_{}.h5".format(network_setup[network_index])
 input_shape = 3
 # env = PendulumEnv()
 # init_weights = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[0],network_setup[network_index])

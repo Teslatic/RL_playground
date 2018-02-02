@@ -24,7 +24,7 @@ env.cnt += 1
 input_shape = 3
 batch_size = 64
 test_agent = DankAgent([-env.max_torque,env.max_torque],input_shape,batch_size)
-test_agent.load('network.h5')
+test_agent.load('network_vanilla.h5')
 
 list_episode_reward = []
 
