@@ -68,8 +68,8 @@ AUTO_SAVER = 50
 SHOW_PROGRESS = 25
 TIMESTEPS = 200
 # BATCH_SIZE = [32, 64, 128, 256, 512]
-BATCH_SIZE = [32]
-RUNS = 1
+BATCH_SIZE = [8]
+RUNS = 10
 TEST_PROGRESS = 10
 TESTS = 50
 ####### INTIALISATION ##########################################################
@@ -110,9 +110,9 @@ for run in range(RUNS):
     memory = []
     # agent.model.load_weights('model_init_weights.h5')
     # agent.target_model.load_weights('target_model_init_weights.h5')
-    agent.q_target = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
-    agent.t = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
-    agent.a = np.zeros((BATCH_SIZE[run],int(agent.ticks)))
+    agent.q_target = np.zeros((BATCH_SIZE[0],int(agent.ticks)))
+    agent.t = np.zeros((BATCH_SIZE[0],int(agent.ticks)))
+    agent.a = np.zeros((BATCH_SIZE[0],int(agent.ticks)))
     agent.epsilon = 1.0
 
 
@@ -221,8 +221,8 @@ for run in range(RUNS):
 
 
 for i in range(RUNS):
-    plt.plot(list_avg_reward[i], label='{}'.format(network_setup[network_index]))
-plt.plot(np.mean(list_avg_reward,axis=0), label = 'mean')
+    plt.plot(list_avg_reward[i], color='grey')#label='{}'.format(network_setup[network_index]))
+plt.plot(np.mean(list_avg_reward,axis=0), label = 'mean', color='red')
 plt.plot(np.mean(list_avg_reward,axis=0)+np.std(list_avg_reward,axis=0), label = 'mean+std. dev.',linestyle = '--', color='pink')
 plt.plot(np.mean(list_avg_reward,axis=0)-np.std(list_avg_reward,axis=0), label = 'mean-std. dev.',linestyle = '--',color='pink')
 plt.title("Avg. reward in a intermediate test every {} episodes".format(TEST_PROGRESS))
@@ -235,16 +235,16 @@ plt.legend()
     #writer.writerows(list_avg_reward)
 
 # Plot the episode reward over time
-print(list_avg_reward)
-print(list_avg_reward[0])
-print(list_avg_reward[0][0])
-smoothing_window = 10
-fig2 = plt.figure(figsize=(10,5))
-rewards_smoothed = pd.Series(list_avg_reward[0]).rolling(smoothing_window, min_periods=smoothing_window).mean()
-plt.plot(rewards_smoothed)
-plt.xlabel("Episode")
-plt.ylabel("Episode Reward (Smoothed)")
-plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
+# print(list_avg_reward)
+# print(list_avg_reward[0])
+# print(list_avg_reward[0][0])
+# smoothing_window = 10
+# fig2 = plt.figure(figsize=(10,5))
+# rewards_smoothed = pd.Series(list_avg_reward[0]).rolling(smoothing_window, min_periods=smoothing_window).mean()
+# plt.plot(rewards_smoothed)
+# plt.xlabel("Episode")
+# plt.ylabel("Episode Reward (Smoothed)")
+# plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
 
 
 

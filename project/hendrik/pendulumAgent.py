@@ -15,7 +15,8 @@ class DankAgent():
         self.input_shape = input_shape
         self.action_interval = action_interval
         self.batch_size = batch_size
-        self.step_length = 0.16#def: 0.1
+        # self.step_length = 0.16#def: 0.1
+        self.step_length = 1.0 #0.5
         self.disc_actions = self._discretize_actions()
         self.gamma = 0.9
         self.epsilon = 1.0
