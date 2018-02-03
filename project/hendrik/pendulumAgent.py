@@ -29,8 +29,9 @@ class DankAgent():
         self.cnt = 1
         self.train_marker = 1
         self.update_target_marker = 200
-
-
+        self.memory_counter = 0
+        self.memory_size = 3000
+        self.memory = np.empty([self.memory_size,9])
 
     def _discretize_actions(self):
         self.ticks = (np.abs(self.action_interval[0]) + np.abs(self.action_interval[-1])) / self.step_length
@@ -49,7 +50,7 @@ class DankAgent():
             model.add(Dense(32, activation = 'relu',))
             model.add(Dense(int(self.ticks), activation = 'linear' ,))
             model.compile(loss = 'mse', optimizer = Nadam(lr = self.learning_rate))
-            
+
         if self.setup == 'Dropout':
             model = Sequential()
             model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
@@ -58,7 +59,7 @@ class DankAgent():
             model.add(Dropout(0.5))
             model.add(Dense(int(self.ticks), activation = 'linear' ,))
             model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
-            
+
         if self.setup == 'Deeper':
             model = Sequential()
             model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
@@ -67,14 +68,14 @@ class DankAgent():
             model.add(Dense(64, activation = 'relu',))
             model.add(Dense(int(self.ticks), activation = 'linear' ,))
             model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
-            
+
         if self.setup == 'Wider':
             model = Sequential()
             model.add(Dense(512,input_shape = (self.input_shape,),activation = 'relu',))
             model.add(Dense(1024, activation = 'relu',))
             model.add(Dense(int(self.ticks), activation = 'linear' ,))
             model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
-            
+
         if self.setup == 'DeepWideDrop':
             model = Sequential()
             model.add(Dense(32,input_shape = (self.input_shape,),activation = 'relu',))
@@ -87,10 +88,10 @@ class DankAgent():
             model.add(Dropout(0.5))
             model.add(Dense(int(self.ticks), activation = 'linear' ,))
             model.compile(loss = 'mse', optimizer = Adam(lr = self.learning_rate))
-            
+
         return model
 
-    
+
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
 
@@ -98,13 +99,13 @@ class DankAgent():
 
         if en_explore == True:
             pick = np.random.choice(['random','greedy'], p = [self.epsilon,1-self.epsilon])
-            
+
             if pick == 'random':
-                
+
                 action = np.where(self.disc_actions==random.choice(self.disc_actions))[0]
 
             else:
-                
+
                 #state = state.reshape((1,self.input_shape))
                 action_values = self.model.predict(state)
                 action = np.array((np.argmax(action_values),))
@@ -114,9 +115,21 @@ class DankAgent():
             action = np.array((np.argmax(action_values),))
         return action
 
-    
-    def train(self, batch, memory):
-           
+
+
+    def memory_store(self, state_now, action, reward, state_next, done):
+
+        action = np.reshape(action, [1, 1])
+        reward = np.reshape(reward, [1, 1])
+        done = np.reshape(done, [1, 1])
+        transition = np.hstack((state_now, action, reward, state_next, done))
+
+        index = self.memory_counter % self.memory_size
+        self.memory[index, :] = transition
+        self.memory_counter += 1
+
+    def train(self, batch):
+
         state_batch = np.array([x[0] for x in batch])
         state_batch = state_batch.reshape((self.batch_size,3))
         action_batch = np.array([x[1] for x in batch])
@@ -124,27 +137,72 @@ class DankAgent():
         reward_batch = np.array([x[2] for x in batch])
         reward_batch = reward_batch.reshape((self.batch_size,1))
         next_state_batch = np.array([x[3] for x in batch])
-        next_state_batch = next_state_batch.reshape((self.batch_size,3))              
+        next_state_batch = next_state_batch.reshape((self.batch_size,3))
         done_batch = np.array([x[4] for x in batch])
         done_batch = done_batch.reshape((self.batch_size,1))
-        
+
         #print(state_batch.shape)
         q_target = self.model.predict(state_batch)#, batch_size = self.batch_size)
-        
+        # print("q_target")
+        # print(q_target)
+        # print(q_target.shape)
+
         a = self.model.predict(next_state_batch)#, batch_size = self.batch_size)
+        # print("a = q_next1")
+        # print(a)
+        # print(a.shape)
 
         t = self.target_model.predict(next_state_batch)#, batch_size = self.batch_size)
-        
+        # print("t = q_nextt")
+        # print(t)
+        # print(t.shape)
+
+        batch_action_withMaxQ = np.argmax(a, axis=0)
+        # print("axis=0",batch_action_withMaxQ)
+        batch_action_withMaxQ = np.argmax(a, axis=1)
+        # print("axis=1",batch_action_withMaxQ)
+
+
+
+
+
         for idx,action in enumerate(action_batch):
-            q_target[idx][action] = reward_batch[idx] + self.gamma * t[idx][np.argmax(a[idx][action])]
-       
+            # print("a[idx]")
+            # print(a[idx])
+            # print(np.argmax(a[idx],axis=0))
+            # print(a[idx][action])
+
+            # q_target[idx][action] = reward_batch[idx] + self.gamma * t[idx][np.argmax(a[idx][action])]
+            q_target[idx][action] = reward_batch[idx] + self.gamma * t[idx][np.argmax(a[idx],axis=0)]
         #self.model.train_on_batch(state_batch, q_target)
-        
+        # print(batch_memory)
+
+        # batch = np.array(batch)
+
+        # print(batch[:,:3])
+        # raise()
+
+        # batch_state = batch_memory[:, :3]
+        # batch_action = batch_memory[:, 3].astype(int)
+        # batch_reward = batch_memory[:, 3+1]
+        # batch_state_next = batch_memory[:, -3-1:-1]
+        # batch_done = batch_memory[:, -1]
+        #
+        # q_target = self.model.predict(batch_state)
+        # q_next1 = self.model.predict(batch_state_next)
+        # q_next2 = self.target_model.predict(batch_state_next)
+        # batch_action_withMaxQ = np.argmax(q_next1, axis=1)
+        # batch_index11 = np.arange(self.batch_size, dtype=np.int32)
+        # q_next_Max = q_next2[batch_index11, batch_action_withMaxQ]
+        #
+        # # q_target[batch_index11, batch_action] = batch_reward + (1-batch_done)*self.gamma * q_next_Max
+        # q_target[batch_index11, batch_action] = batch_reward + self.gamma * q_next_Max
+
         self.model.fit(state_batch, q_target, batch_size = self.batch_size, epochs = 1, verbose = 0)
-        
+        # self.model.fit(batch_state, q_target, batch_size = self.batch_size, epochs = 1, verbose = 0)
         if self.cnt % self.update_target_marker == 0:
             self.update_target_model()
-            print("updated")
+            self.cnt = 0
         self.cnt += 1
 
 

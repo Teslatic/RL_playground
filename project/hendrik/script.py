@@ -42,8 +42,8 @@ def test_run(agent):
         state = env.reset()
         state = state.reshape((1,3))
         for _ in range(500):
-            
-            
+
+
             action = agent.act(state, False)[0]
             next_state, reward, done, _ = env.step(agent.discrete_actions[action], True)
             next_state = next_state.reshape((1,3))
@@ -61,12 +61,12 @@ def test_run(agent):
 ######## CONSTANTS ############################################################
 
 MEMORY_SIZE = 8000000
-MEMORY_FILL = 30000
+MEMORY_FILL = 3000
 memory = []
 TRAINING_EPISODES = 300
 AUTO_SAVER = 50
 SHOW_PROGRESS = 25
-TIMESTEPS = 400
+TIMESTEPS = 200
 # BATCH_SIZE = [32, 64, 128, 256, 512]
 BATCH_SIZE = [32]
 RUNS = 1
@@ -102,7 +102,7 @@ for run in range(RUNS):
     # resetting the agent
 
     env = PendulumEnv()
-    agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[run], network_setup[network_index])
+    agent = DankAgent([-env.max_torque,env.max_torque], input_shape, BATCH_SIZE[0], network_setup[network_index])
     print_setup()
     agent.model.summary()
     #keras.utils.plot_model(agent.model, to_file='model.png', show_shapes=False, show_layer_names=True, rankdir='TB')
@@ -131,30 +131,31 @@ for run in range(RUNS):
         episode_reward = 0
         if (ep+1) % TEST_PROGRESS == 0 and ep != 0:
             list_avg_reward[run].append(test_run(agent))
-            
-            
+
+
         if ep < 1:
             print("filling memory")
-        while len(memory) < MEMORY_FILL and ep < 1:
-            action = agent.act(state, True)[0]
+            for i in range(MEMORY_FILL):
+        # while len(memory) < MEMORY_FILL and ep < 1:
+                action = agent.act(state, True)[0]
 
-            next_state, reward, done , _ = env.step(agent.discrete_actions[action], False)
-            next_state = next_state.reshape((1,3))
-            
-            #next_state = np.round(next_state,2)
-            memory.append((state, action, reward, next_state, done))
-            
+                next_state, reward, done , _ = env.step(agent.discrete_actions[action], False)
+                next_state = next_state.reshape((1,3))
 
-            #if len(memory) > BATCH_SIZE[run]:
-                #batch = random.sample(memory, BATCH_SIZE[run])
-                #agent.train(batch,memory)
+                #next_state = np.round(next_state,2)
+                memory.append((state, action, reward, next_state, done))
+                #agent.memory_store(state, action, reward, next_state, done)
 
-            state = next_state
-        if ep < 1:
+                #if len(memory) > BATCH_SIZE[run]:
+                    #batch = random.sample(memory, BATCH_SIZE[run])
+                    #agent.train(batch,memory)
+
+                state = next_state
+        # if ep < 1:
             print("memory filled with {} samples".format(len(memory)))
-            
-            
-            
+
+
+
 
         for t in range(TIMESTEPS):
             if (ep+1) % SHOW_PROGRESS == 0 and ep != 0 and len(memory) >= MEMORY_FILL:
@@ -170,8 +171,8 @@ for run in range(RUNS):
 
             next_state, reward, done , _ = env.step(agent.discrete_actions[action], False)
             next_state = next_state.reshape((1,3))
-            
-            
+
+
             #next_state = np.array((next_state[0],next_state[2]))
             #next_state = np.round(next_state,2)
 
@@ -182,13 +183,15 @@ for run in range(RUNS):
 
             memory.append((state, action, reward, next_state, done))
 
+            #agent.memory_store(state, action, reward, next_state, done)
 
-            if len(memory) >= BATCH_SIZE[run]:
-                batch = random.sample(memory, BATCH_SIZE[run])
-
-                agent.train(batch,memory)
-            else:
-                batch = random.choice(memory)
+            #if len(memory) >= BATCH_SIZE[run]:
+            batch = random.sample(memory, BATCH_SIZE[0])
+            #sample_index = np.random.choice(MEMORY_FILL, size=BATCH_SIZE)
+            #batch = agent.memory[sample_index, :]
+            agent.train(batch)
+            #else:
+            #    batch = random.choice(memory)
 
             state = next_state
             acc_reward += reward
@@ -201,9 +204,9 @@ for run in range(RUNS):
         sys.stdout.flush()
 
         #agent.epsilon = agent.init_epsilon*np.exp(-agent.eps_decay_rate*ep)+agent.decay_const
-        
-            
-        
+
+
+
         list_episode_reward[run].append(episode_reward)
         list_acc_reward[run].append(acc_reward)
         list_epsilon[run].append(agent.epsilon)
