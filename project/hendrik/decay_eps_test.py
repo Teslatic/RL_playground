@@ -2,10 +2,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-epsilon = 1.0
-decay_rate = 0.01
+epsilon = 0.95
+decay_rate = 0.055
 episodes = 500
-const = 0.1
+const = 0.05
 init_eps = epsilon-const
 epsilon = []
 
