@@ -58,7 +58,7 @@ class Plotter():
                       v
     List of means:  [µ1,  µ2, ..., µN]
 
-    std. deviation is calculated along axis 1
+    std. deviation is calculated along axis 0
     Std. dev.    :  [s1,  s2, ..., sN]
     '''
 
@@ -82,7 +82,7 @@ class Plotter():
             plt.plot(val[0], label = '{}'.format(features[idx]))
         plt.plot(merged_mean, label ='mean of means')
         plt.plot(merged_mean+mean_std[0], label='+', linestyle = '-.')
-        plt.plot(merged_mean-mean_std[0], label='+', linestyle = '-.')
+        plt.plot(merged_mean-mean_std[0], label='-', linestyle = '-.')
 
         plt.legend()
         plt.show()
