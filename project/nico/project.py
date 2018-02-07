@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 """
 Reinforcement Learning Project
 Authors: Nico Ott, Lior Fuks, Hendrik Vloet
@@ -18,32 +17,18 @@ The following algorithms have been implemented:
 19.01.2018 V1.0 inital version
 """
 
-# __version__ = '0.1'
-# __author__ = 'Lior Fuks, Nico Ott, Hendrik Vloet'
-
 ###############################################################################
 # Import packages
 ###############################################################################
-
-from os import path
 import sys
-import time
-
-# Import tensorflow as tf
-import numpy as np
-import matplotlib.pyplot as plt
-
 if "../" not in sys.path:
     sys.path.append("../")
 from lib.envs.pendulum import PendulumEnv
 
-from assets.agents.Reinforce_Agent import Reinforce_Agent
-from assets.estimators.NN_estimator import NN_estimator
+from assets.agents.Dank_Agent import Dank_Agent
 import assets.policies.policies
-import assets.functions
 from assets.helperFunctions.timestamps import print_timestamp
-from keras.optimizers import Adam, Nadam
-
+from assets.plotter.DankPlotters import PolarHeatmapPlotter
 
 ###############################################################################
 # Hyperparameter settings
@@ -51,7 +36,7 @@ from keras.optimizers import Adam, Nadam
 
 # MAYBE USED NAMETUPLE INSTEAD HERE
 # Agent hyperparameters
-hyperparameters =   {
+hyperparameters = {
                     'STEP_LENGTH': 0.05,  # ?
                     'GAMMA': 0.9,
                     'LEARNING_RATE': 0.0001,
@@ -59,30 +44,40 @@ hyperparameters =   {
                     'CONST_DECAY': 0.0,
                     'EPSILON': 1,
                     'EPSILON_INIT': 0.3,
-                    'EPS_DECAY_RATE': 0.04,
-                    'N_ACTION': 25,
+                    'EPS_DECAY_RATE': 0.001,
+                    'D_ACTION': 25,
                     'OPTIMIZER': 'NAdam'
                     }
 
-# Training parameters
-training_parameters =   {
-                        'BATCH_SIZE': 32,
-                        'TRAINING_EPISODES': 100,
-                        'TRAINING_TIMESTEPS': 200,
-                        'MEMORY_SIZE': 80000,
-                        'AUTO_SAVER': 50,
-                        'SHOW_PROGRESS': None,
-                        # 'RENDER': False
-                       # learn_counter
-                       # memory_counter
-                       # self.memory = np.empty([self.memory_size,9])
-                        }
-
 # Evaluation parameters
 evaluation_parameters = {
-                        'EVALUATION_EPISODES': 200,
+                        'EVALUATION_EPISODES': 20,
                         'EVALUATION_TIMESTEPS': 500,
-                        'SHOW_PROGRESS': None
+                        'RENDER_EVALUATE': False
+                        }
+
+# Training parameters
+training_parameters = {
+                        'BATCH_SIZE': 32,  # 32
+                        'TRAINING_EPISODES': 200,
+                        'TRAINING_TIMESTEPS': 200,
+                        'MEMORY_SIZE': 24000, # 80000
+                        'AUTO_SAVER': 50,
+                        'SHOW_PROGRESS': None,
+                        'STORE_PROGRESS': 10,
+                        'EVALUATE_EACH': 10,
+                        'EVAL_PARAMETERS': evaluation_parameters
+                        # 'POLICY': "epsilon_greedy"
+                        # 'RENDER': False
+                        # learn_counter
+                        # memory_counter
+                        # self.memory = np.empty([self.memory_size,9])
+                       }
+
+test_parameters = {
+                        'TEST_EPISODES': 200,
+                        'TEST_TIMESTEPS': 500,
+                        'SHOW_EVALUATE': 10
                         }
 
 # Model file
@@ -90,10 +85,10 @@ model = {
         'MODEL_TYPE': 'DQN',
         'WEIGHT_FILE': None,
         'WEIGHT_FILE_OUT': "estimator.h5",
-        'LOAD_EXISTING_MODEL':True,
+        'LOAD_EXISTING_MODEL': True,
         'ACTIVATION': 'relu',
         'LOSS': 'mse',
-        'OPTIMIZER': Nadam,
+        'OPTIMIZER': 'Nadam',
         'LEARNING_RATE': 0.0001,
         }
 
@@ -110,29 +105,21 @@ reward_function_sweep = ['Vanilla', 'Heuristic1', 'Heuristic2']
 ###############################################################################
 # Main starts here
 ###############################################################################
-
+print_timestamp('Plotting')
+heat = PolarHeatmapPlotter()
+heat.plot()
 print_timestamp('Started main program')
-# Create some environments
-env = PendulumEnv()  # Setup the environment
-# Create some agents
-dankAgent = Reinforce_Agent(env, hyperparameters, model)
-# memeAgent = DQN_Agent
 
+env = PendulumEnv()  # Create some environments
+dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
+# memeAgent = DQN_Agent
 
 # Start a training session with a given weight_file (e.g.)
 training_weight_file = model["WEIGHT_FILE"]
 training_report = dankAgent.train(training_parameters, training_weight_file)
 
-report = dankAgent.perform(model)  # perform with weights
+# report = dankAgent.perform(model)  # perform with weights
 # dankAgent.present() # Plot the results
-
-# Sweeping one parameter
-# for sweep_parameter in batch_size_sweep:
-#     training_parameters["BATCH_SIZE"] = sweep_parameter
-#     print_timestamp('Parameter Sweep: Starting training with batchsize {}'.format(sweep_parameter))
-#     dankAgent.train(training_parameters, training_weight_file)  # Train agent
-    # report = dankAgent.perform(model)  # perform with weights
-    # dankAgent.present() # Plot the results
 
 ###############################################################################
 # Code dumpster

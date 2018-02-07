@@ -13,7 +13,7 @@ from collections import defaultdict, namedtuple
 
 import keras
 from keras.models import Sequential
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam, Nadam, RMSprop
 from keras import backend as K
 from keras.layers import Flatten,Dense, Dropout
 
@@ -64,24 +64,14 @@ class NN_estimator():
         action_space = architecture["ACTION_SPACE"]
         activation = architecture["ACTIVATION"]
         loss = architecture["LOSS"]
-        optimizer = architecture["OPTIMIZER"]
+        if architecture["OPTIMIZER"] == 'Adam':
+            optimizer = Adam
+        elif architecture["OPTIMIZER"] == 'Nadam':
+            optimizer = Nadam
+        elif architecture["OPTIMIZER"] == 'RMSprop':
+            optimizer = RMSprop
         learning_rate = architecture["LEARNING_RATE"]
         return D_in, D_out, action_space, activation, loss, optimizer, learning_rate
-
-    def _build_target_model(self):
-        activation_curve = 'relu'
-        unit_num = 20
-        action_dim = self.action_dim
-        input_eval = Input(shape=(self.state_size,))
-        l1 = Dense(unit_num, activation=activation_curve)(input_eval)
-        val_layer = Dense(1)(l1)
-        val_layer = RepeatVector(action_dim)(val_layer)
-        val_layer = Reshape(target_shape=(action_dim,), input_shape=(action_dim, 1,))(val_layer)
-        adv_layer = Dense(action_dim)(l1)
-        merge_layer = Add()([val_layer, adv_layer])
-        model = Model(inputs=input_eval, outputs=merge_layer)
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate), )
-        return model
 
     def load_weights(self, weight_file):
         if weight_file == None:
@@ -106,28 +96,18 @@ class NN_estimator():
         state = convert_vector2tensor(state)
         Q = self.model.predict(state)
         Q = convert_tensor2vector(Q)
-        # print_timestamp("p: {}, action_space: {}".format(p, self.action_space))
-        best_Q = np.argmax(Q)
-        # selected_action = np.array((np.argmax(Q),))
-        # selected_action = np.random.choice(self.action_space, p=p)
-        return Q, best_Q
+        return Q
 
-    def update(self, sess, s, a, y):
+    def update_target_model(self):
         """
         Updates the weights of the neural network, based on its targets, its
         predictions, its loss and its optimizer.
-
-        Args:
-          sess: TensorFlow session.
-          states: [current_state] or states of batch
-          actions: [current_action] or actions of batch
-          targets: [current_target] or targets of batch
         """
-        model.update()
-        feed_dict = {self.states_pl: [s], self.targets_pl: [y], self.actions_pl:
-                    [a]}
-        sess.run(self.train_op, feed_dict)
-        return
+        self.target_model.set_weights(self.model.get_weights())
+
+###############################################################################
+# Code dumpster
+###############################################################################
 
 # class BestPolicy(Policy):
 #   def __init__(self):
@@ -145,10 +125,6 @@ class NN_estimator():
 #   def update(self, sess):
 #     for op in self._associate:
 #       sess.run(op)
-
-###############################################################################
-# Code dumpster
-###############################################################################
 
     # self.states_pl = tf.placeholder(shape=[None, 2], dtype=tf.float32, name="states_pl")
     # # The TD target value
@@ -172,3 +148,19 @@ class NN_estimator():
     # self.objective = -tf.log(self.action_predictions)*self.targets_pl
     # self.optimizer = tf.train.AdamOptimizer(0.0001)
     # self.train_op = self.optimizer.minimize(self.objective)
+
+
+        # def _build_target_model(self):
+        #     activation_curve = 'relu'
+        #     unit_num = 20
+        #     action_dim = self.action_dim
+        #     input_eval = Input(shape=(self.D_state,))
+        #     l1 = Dense(unit_num, activation=activation_curve)(input_eval)
+        #     val_layer = Dense(1)(l1)
+        #     val_layer = RepeatVector(action_dim)(val_layer)
+        #     val_layer = Reshape(target_shape=(action_dim,), input_shape=(action_dim, 1,))(val_layer)
+        #     adv_layer = Dense(action_dim)(l1)
+        #     merge_layer = Add()([val_layer, adv_layer])
+        #     model = Model(inputs=input_eval, outputs=merge_layer)
+        #     model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate), )
+        #     return model

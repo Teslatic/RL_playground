@@ -8,7 +8,7 @@ from PIL import Image
 class PendulumEnv(gym.Env):
     metadata = {
         'render.modes' : ['human', 'rgb_array'],
-        'video.frames_per_second' : 30
+        'video.frames_per_second' : 1000
     }
 
     def __init__(self, reward_function=None):

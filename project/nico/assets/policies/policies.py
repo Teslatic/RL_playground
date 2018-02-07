@@ -1,108 +1,72 @@
-#!/usr/bin/python3
-
-###############################################################################
-# Import packages
-###############################################################################
-
-
-from os import path
 import sys
-import time
+import numpy as np
 import itertools
 from collections import defaultdict, namedtuple
 
-# Import tensorflow as tf
-import numpy as np
-import matplotlib.pyplot as plt
-
-if "../" not in sys.path:
-    sys.path.append("../")
-from lib.envs.pendulum import PendulumEnv
-
-
-###############################################################################
-# Policy
-###############################################################################
-
-
 EpisodeStats = namedtuple("Stats",["episode_lengths", "episode_rewards"])
-VALID_ACTIONS = [0, 1, 2]
 
-class Policy():
-  def __init__(self, policy):
-    if policy == 'DQN':
-        self._build_model()
+def make_epsilon_greedy_policy(Q, epsilon, nA):
+  """
+  Creates an epsilon-greedy policy based on a given Q-function and epsilon.
 
-  def _build_model(self):
+  Args:
+    Q: A dictionary that maps from state -> action-values.
+      Each value is a numpy array of length nA (see below)
+    epsilon: The probability to select a random action . float between 0 and 1.
+    nA: Number of actions in the environment.
+
+  Returns:
+    A function that takes the observation as an argument and returns
+    the probabilities for each action in the form of a numpy array of length nA.
+  """
+
+  def policy_fn(observation):
+    act_prob = np.ones(nA, dtype=float)* epsilon/nA
+    max_action = np.argmax(Q[observation])
+    act_prob[max_action] += (1.0-epsilon)
+    return act_prob
+  return policy_fn
+
+def epsilon_greedy(Q, epsilon, nA):
     """
-    Builds the Tensorflow graph.
-    """
+    An epsilon-greedy policy based on given Q-function and epsilon.
 
-    self.states_pl = tf.placeholder(shape=[None, 2], dtype=tf.float32, name="states_pl")
-    # The TD target value
-    self.targets_pl = tf.placeholder(shape=[None], dtype=tf.float32, name="targets_pl")
-    # Integer id of which action was selected
-    self.actions_pl = tf.placeholder(shape=[None], dtype=tf.int32, name="actions_pl")
-
-    batch_size = tf.shape(self.states_pl)[0]
-
-    self.fc1 = tf.contrib.layers.fully_connected(self.states_pl, 20, activation_fn=tf.nn.relu,
-      weights_initializer=tf.random_uniform_initializer(0, 0.5))
-    self.fc2 = tf.contrib.layers.fully_connected(self.fc1, 20, activation_fn=tf.nn.relu,
-      weights_initializer=tf.random_uniform_initializer(0, 0.5))
-    self.fc3 = tf.contrib.layers.fully_connected(self.fc2, 3, activation_fn=None,
-      weights_initializer=tf.random_uniform_initializer(0, 0.5))
-    self.predictions = tf.nn.softmax(self.fc3)     # softmax prediction
-
-    # Get the predictions for the chosen actions only
-    gather_indices = tf.range(batch_size) * tf.shape(self.predictions)[1] + self.actions_pl
-    self.action_predictions = tf.gather(tf.reshape(self.predictions, [-1]), gather_indices)
-    self.objective = -tf.log(self.action_predictions)*self.targets_pl
-    self.optimizer = tf.train.AdamOptimizer(0.0001)
-    self.train_op = self.optimizer.minimize(self.objective)
-
-
-  def predict(self, sess, s):
-    """
     Args:
-      sess: TensorFlow session
-      states: array of states for which we want to predict the actions.
+      Q: The Q-values for a given state
+      epsilon: The probability to select a random action. float between 0 and 1.
+      nA: Number of actions in the environment.
+
     Returns:
-      The prediction of the output tensor.
+      The index of the selected action.
     """
-    f_dict = {self.states_pl: [s]}
-    p = sess.run(self.predictions, f_dict)[0]
-    return np.random.choice(VALID_ACTIONS, p=p), p
+    if np.random.random() <= epsilon:
+        action = np.random.randint(0, nA)
+    else:
+        action = np.argmax(Q)
+    return action
 
-  def update(self, sess, s, a, y):
+def greedy(Q):
     """
-    Updates the weights of the neural network, based on its targets, its
-    predictions, its loss and its optimizer.
+    A greedy policy based on given Q-values.
 
     Args:
-      sess: TensorFlow session.
-      states: [current_state] or states of batch
-      actions: [current_action] or actions of batch
-      targets: [current_target] or targets of batch
+      Q: The Q-values for a all state.
+
+    Returns:
+      The value of the selected action.
+      The index of the selected action.
     """
-    feed_dict = {self.states_pl: [s], self.targets_pl: [y], self.actions_pl:
-                    [a]}
-    sess.run(self.train_op, feed_dict)
-    return
+    return np.max(Q), np.argmax(Q)
 
-class BestPolicy(Policy):
-  def __init__(self):
-    Policy.__init__(self)
-    self._associate = self._register_associate()
+def greedy_batch(Q):
+    """
+    A greedy policy based on given Q-values.
 
-  def _register_associate(self):
-    tf_vars = tf.trainable_variables()
-    total_vars = len(tf_vars)
-    op_holder = []
-    for idx,var in enumerate(tf_vars[0:total_vars//2]):
-      op_holder.append(tf_vars[idx+total_vars//2].assign((var.value())))
-    return op_holder
+    Args:
+      Q: A batch of Q-values for a all state.
 
-  def update(self, sess):
-    for op in self._associate:
-      sess.run(op)
+    Returns:
+      The value of the selected action.
+      The index of the selected action.
+    """
+    return np.max(Q, axis=1), np.argmax(Q, axis=1)

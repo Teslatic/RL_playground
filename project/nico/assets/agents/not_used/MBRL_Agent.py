@@ -27,7 +27,7 @@ if "../" not in sys.path:
 from assets.agents.RL_Agent import RL_Agent
 from assets.helperFunctions.timestamps import print_timestamp
 
-class MBRL_Agent(RL_Agent):
+class _MBRL_Agent(RL_Agent):
     """
     An RL agent that uses a model of the environment.
 
@@ -45,5 +45,5 @@ class MBRL_Agent(RL_Agent):
         """
         pass
 
-    def update_model(self):
+    def _update_model(self):
         pass

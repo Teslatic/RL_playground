@@ -1,54 +1,10 @@
 #!/usr/bin/python3
-
-"""
-Reinforcement Learning Project
-Authors: Nico Ott, Lior Fuks, Hendrik Vloet
-
-The task for the RL project is to balance a pendulum upright.
-A modified version of OpenAI's pendulum environment is used  which only uses
-binary rewards.
-
-Reward = 1 if the pendulum is in an upright position.
-Reward = 0 if not.
-
-The following algorithms have been implemented:
--
-
-19.01.2018 V1.0 inital version
-"""
-
-# __version__ = '0.1'
-# __author__ = 'Lior Fuks, Nico Ott, Hendrik Vloet'
-
-###############################################################################
-# Import packages
-###############################################################################
-
-
-from os import path
-import sys
-import time
-
-import numpy as np
-import matplotlib.pyplot as plt
-from collections import namedtuple
-import itertools
-
-# Import tensorflow as tf
-import keras
-from keras.models import Sequential
-from keras.optimizers import Adam, RMSprop
-from keras import backend as K
-from keras.layers import Flatten,Dense, Dropout
-
-if "../" not in sys.path:
-    sys.path.append("../")
-# from lib.envs.pendulum import PendulumEnv
-from assets.agents.MBRL_Agent import RL_Agent
-from assets.helperFunctions.timestamps import print_timestamp
+from assets.agents.RL_Agent import RL_Agent
+from assets.helperFunctions.discretize import discretize
 from assets.estimators.NN_estimator import NN_estimator
 
-class DQN_Agent(RL_Agent):
+
+class _DQN_Agent(RL_Agent):
     """
     An model based RL agent that uses DQN as a model of the environment.
 
@@ -65,8 +21,8 @@ class DQN_Agent(RL_Agent):
 
     def _create_architecture(self, model):
         architecture = {
-                        'D_IN': self.env.observation_space.shape[0],
-                        'D_OUT': self.n_action,
+                        'D_IN': self.D_state,
+                        'D_OUT': self.D_action,
                         'ACTION_SPACE': self.action_space,
                         'ACTIVATION': model["ACTIVATION"],
                         'LOSS': model["LOSS"],
@@ -83,9 +39,8 @@ class DQN_Agent(RL_Agent):
         Builds a DQN model. Architecture should be defined by input parameters
         """
         estimator = NN_estimator(architecture)
-
         weight_file = architecture["WEIGHT_FILE"]
-        if weight_file == None:
+        if weight_file is None:
             pass
         else:
             estimator.load_weights(weight_file)
