@@ -3,7 +3,7 @@ from assets.agents.DQN_Agent import _DQN_Agent
 from assets.helperFunctions.timestamps import print_timestamp
 from assets.helperFunctions.discretize import discretize
 from assets.policies.policies import epsilon_greedy, greedy, greedy_batch
-
+from assets.plotter.PolarHeatmapPlotter import PolarHeatmapPlotter
 
 class Dank_Agent(_DQN_Agent):
     """
@@ -25,12 +25,10 @@ class Dank_Agent(_DQN_Agent):
           hyperparameters: A set of hyperparameters
           model: Specifications for the neural networks
         """
-        self._init_env_parameters(env)
-        self._unzip_hyperparameters(hyperparameters)
-        self.action_space = discretize(self.action_low, self.action_high, self.D_action)
-        architecture = self._create_architecture(model)
-        self.estimator = self._build_model(architecture)
-        self.target = self._build_model(architecture)
+        # Das ist super, das ist elegant!
+        super().__init__(env, hyperparameters, model)
+        # Building a target model with the same architecture as the estimator.
+        self.target = self._build_model(self.architecture)
 
 
 ###############################################################################
@@ -43,7 +41,8 @@ class Dank_Agent(_DQN_Agent):
         """
         # Unzip the batch
         batch_state, batch_action, batch_reward, batch_state_next = self.memory.unzip_batch(batch_memory)
-
+        # print_timestamp("Actual Batch: {}".format(batch_state))
+        # Prediction time
         q_target = self.estimator.model.predict(batch_state)
         q_next1 = self.estimator.model.predict(batch_state_next)
         q_next2 = self.target.model.predict(batch_state_next)
@@ -58,8 +57,7 @@ class Dank_Agent(_DQN_Agent):
         # print(q_next_max)
         q_target[batch_index11, batch_action] = batch_reward + self.gamma * q_next_max
 
-        self.history = self.estimator.model.fit(batch_state, q_target, batch_size=self.batch_size, epochs=1, verbose=0)
-        self.learn_counter += 1
+        self.estimator.model.fit(batch_state, q_target, batch_size=self.batch_size, epochs=1, verbose=0)
 
     def update_target_model(self):
         """
@@ -73,57 +71,61 @@ class Dank_Agent(_DQN_Agent):
 # Training method
 ###############################################################################
 
-    def train(self, training_parameters, weights_file=None):
+    def learn(self, training_parameters):
         """The agent uses his training method on the given environment"""
-        self._initialize_training(training_parameters, weights_file)
+        self._initialize_learning(training_parameters)
         for ep in range(self.training_episodes):
             self._initialize_episode(ep)
             for t in range(self.training_timesteps):
-                self._initialize_timestep()
+                self._initialize_timestep() # Just render
                 self.Q = self.estimator.predict(self.state)
-                self.action = epsilon_greedy(self.Q, self.epsilon, self.D_action)
-                # self.action = self._select_action(self.state, self.policy)
-                self.next_state, self.reward, done = self._act(self.action)  # Perform action
+                self.action = epsilon_greedy(self.Q, self.epsilon, self.action_space)
+                self.next_state, self.reward, done = self._act(self.action, False)
                 self._analyze_timestep()
-
-                if done:
-                    break
-            self._analyze_episode(ep)
-            print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format(ep, self.training_episodes, self.episode_reward, self.epsilon,))
-            self._decrease_epsilon()
-            if self.evaluate:
-                report = self.training_evaluation(self.eval_parameters)
-        return report
-
-
-###############################################################################
-# Evaluation method
-###############################################################################
-
-    def training_evaluation(self, evaluation_parameters):
-        """
-        The agent uses its current training state to evaluate the training progress. The stored data can later be analysed with plot functions.
-        """
-        self._initialize_evaluation(evaluation_parameters)
-        for ep in range(self.evaluation_episodes):
-            self.env.seed(ep)  # For comparability
-            self._initialize_episode(ep)
-            for step in range(self.evaluation_timesteps):
-                self._initialize_evaluation_timestep()
-                self.Q = self.estimator.predict(self.state)
-                self.action, self.action_idx = greedy(self.Q)
-                self.next_state, self.reward, done = self._act(self.action)
-                self._analyze_evaluation_timestep()
-                if(ep > 10):
-                    # print_timestamp("Updating on batch")
+                if self.update:
                     self.update_on_batch(self.memory.get_batch(self.batch_size))
                 if done:
                     break
+                self._decrease_epsilon()
             self._analyze_episode(ep)
-            if(ep > 10):
+            print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format(ep, self.training_episodes, self.episode_reward.round(2), self.epsilon))
+
+
+            if self.update:
                 # print_timestamp("Updating target model weights")
                 self.update_target_model()
-        # print_timestamp("Updating target model")
+            if self.test:
+                test_report = self.run_test(self.test_parameters)
+                average_reward = test_report[1].round(2)  # dictionary
+                self.average_reward_list.append(average_reward)
+                print_timestamp('Test ended with average reward: {}'.format(average_reward))
+                print_timestamp('Plotting')
+                heat = PolarHeatmapPlotter(2, self.target, self.experiment_name)
+                heat.plot(ep, average_reward)
+        return self.reward_list, self.average_reward_list
+
+
+###############################################################################
+# Test method
+###############################################################################
+
+    def run_test(self, test_parameters):
+        """
+        The agent uses its current training state to test the training progress. The stored data can later be analysed with plot functions.
+        """
+        self._initialize_test(test_parameters)
+        for ep in range(self.test_episodes):
+
+            self._initialize_test_episode(ep)
+            for step in range(self.test_timesteps):
+                self._initialize_test_timestep()
+                self.Q = self.estimator.predict(self.state)
+                self.action_idx, self.action = greedy(self.Q, self.action_space)
+                self.next_state, self.reward, done = self._act(self.action, vanilla=True)
+                self._analyze_test_timestep()
+                if done:
+                    break
+            self._analyze_test_episode(ep)
         report = self._prepare_report()
         return report
 
@@ -140,10 +142,7 @@ class Dank_Agent(_DQN_Agent):
 #     report = dankAgent.perform(model)  # perform with weights
 #     dankAgent.present() # Plot the results
 
-    def _prepare_report(self):
-        eval_reward_average = np.mean(self.reward_list)
-        print(eval_reward_average)
-        return [self.reward_list, eval_reward_average]
+
 
 ###############################################################################
 # Code dumpster

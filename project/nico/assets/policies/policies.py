@@ -27,25 +27,26 @@ def make_epsilon_greedy_policy(Q, epsilon, nA):
     return act_prob
   return policy_fn
 
-def epsilon_greedy(Q, epsilon, nA):
+def epsilon_greedy(Q, epsilon, action_space):
     """
     An epsilon-greedy policy based on given Q-function and epsilon.
 
     Args:
       Q: The Q-values for a given state
       epsilon: The probability to select a random action. float between 0 and 1.
-      nA: Number of actions in the environment.
+      action_space: The vector which contains the available discrete actions.
 
     Returns:
       The index of the selected action.
     """
+    nA = len(action_space)
     if np.random.random() <= epsilon:
-        action = np.random.randint(0, nA)
+        action = action_space[np.random.randint(0, nA)]
     else:
-        action = np.argmax(Q)
+        action = action_space[np.argmax(Q)]
     return action
 
-def greedy(Q):
+def greedy(Q, action_space):
     """
     A greedy policy based on given Q-values.
 
@@ -56,7 +57,9 @@ def greedy(Q):
       The value of the selected action.
       The index of the selected action.
     """
-    return np.max(Q), np.argmax(Q)
+    max_idx = np.argmax(Q)
+    action = action_space[max_idx]
+    return max_idx, action
 
 def greedy_batch(Q):
     """

@@ -1,180 +1,57 @@
 # from os import path
 import numpy as np
-from collections import namedtuple
 
 # if "../" not in sys.path:
 #     sys.path.append("../")
 from assets.helperFunctions.timestamps import print_timestamp
 from assets.memory.memory import TransitionBuffer
 from assets.policies.policies import make_epsilon_greedy_policy
-
+from assets.helperFunctions.discretize import discretize
+from assets.reports.Report import TrainingReport
 
 class RL_Agent():
     """Basic RL agent class"""
+
+###############################################################################
+# Initializing methods
+###############################################################################
 
     def __init__(self, env, hyperparameters):
         """
         Sets the agents basic parameters according to the environment.
         Unzips the given hyperparameters for the agent.
+        Discretizes the action space (imported method).
+        Checked --> Works correctly.
         """
         self._init_env_parameters(env)
         self._unzip_hyperparameters(hyperparameters)
+        self.action_space = discretize(self.action_low, self.action_high, self.D_action)
 
     def _init_env_parameters(self, env):
         """
         Initializing parameters according to the environment.
+        Checked:
+        print("D_state: {}, action_high: {}, action_low: {}".format(self.D_state, self.action_high, self.action_low))
         """
         self.env = env
-        self.observation_space = self.env.observation_space
         self.D_state = self.env.observation_space.shape[0]
-        self.action_space_cont = self.env.action_space
-        self.action_high = self.action_space_cont.high[0]
-        self.action_low = self.action_space_cont.low[0]
-        self.highscore_reward = 0  # best ever achieved reward
-        self.best_parameters = None
+        self.action_high = self.env.action_space.high[0]
+        self.action_low = self.env.action_space.low[0]
+
 
     def _unzip_hyperparameters(self, hyperparameters):
         """Unzips the hyperparameter set and writes it into single variables"""
-        self.learning_rate = hyperparameters['LEARNING_RATE']
-        self.render = hyperparameters['LEARNING_RATE']
-        self.gamma = hyperparameters['GAMMA']
-        self.epsilon = hyperparameters['EPSILON']
-        self.epsilon_init = hyperparameters['EPSILON_INIT']
-        self.epsilon_decay_rate = hyperparameters['EPS_DECAY_RATE']
-        self.const_decay = hyperparameters['CONST_DECAY']
-        self.step_length = hyperparameters['STEP_LENGTH']
         self.D_action = hyperparameters['D_ACTION']
+        self.gamma = hyperparameters['GAMMA']
+        # self.learning_rate = hyperparameters['LEARNING_RATE']
 
-    def _initialize_training(self, training_parameters, weights_file):
-        """
-        This method initialize all members needed for the training.
-        """
-        self.training_episodes = training_parameters['TRAINING_EPISODES']
-        self.batch_size = training_parameters['BATCH_SIZE']
-        self.training_timesteps = training_parameters['TRAINING_TIMESTEPS']
-        self.memory_size = training_parameters['MEMORY_SIZE']
-        self.auto_saver = training_parameters['AUTO_SAVER']
-        self.show_progress = training_parameters['SHOW_PROGRESS']
-        self.store_progress = training_parameters['STORE_PROGRESS']
-        self.evaluate_each = training_parameters['EVALUATE_EACH']
+###############################################################################
+# General layout of an RL task
+###############################################################################
 
-        self.save = False  # indicates if weight file has to be saved
-        self.render = False  # indictaes if progess has to be rendered
-        self.store = False  # indicates if progress has to be stored
-        self.evaluate = False
-        # evaluation parameters
-        self.eval_parameters = training_parameters['EVAL_PARAMETERS']
-        self._initialize_evaluation(self.eval_parameters)
-        self.weights_file = weights_file
-        self.learn_counter = 0
-        # Initialize memory
-        self.memory_depth = 8  # magic: 2xD_state = 6 + action, reward
-        self.memory = TransitionBuffer(self.memory_size, self.memory_depth)
-
-        # Initialize report parameters
-        zero_vector = np.zeros(self.training_episodes)
-        self.EpisodeStats = namedtuple("Stats", ["length", "reward"])
-        self.episode_stats = self.EpisodeStats(length=zero_vector, reward=zero_vector)
-
-    def _initialize_evaluation(self, eval_parameters):
-        print_timestamp("Starting evaluation. ")
-        self.evaluation_episodes = eval_parameters['EVALUATION_EPISODES']
-        self.evaluation_timesteps = eval_parameters['EVALUATION_TIMESTEPS']
-        self.render_evaluation = eval_parameters['RENDER_EVALUATE']
-        self.reward_list = []
-
-    def _initialize_episode(self, ep):
-        """
-        Every show_progress_each steps the render flag is set to true.
-        Every save_weights_each steps the save flag is set to true.
-        """
-        self.state = self.env.reset()
-        self.episode_reward = 0
-        self.episode_history = []  # Clearing the history
-
-        # FLAGS
-        if ep != 0:  # No flags for the first episode
-            if self.show_progress is None:
-                self.render = False
-            else:
-                self.render = True if (ep % self.show_progress == 0) else False
-
-            if self.store_progress is None:
-                self.store = False
-            else:
-                self.store = True if (ep % self.store_progress == 0) else False
-
-            if self.auto_saver is None:
-                self.save = False
-            else:
-                self.save = True if (ep % self.auto_saver == 0) else False
-
-            if self.evaluate_each is None:
-                self.evaluate = False
-            else:
-                self.evaluate = True if (ep % self.evaluate_each == 0) else False
-
-    def _analyze_episode(self, ep):
-        self.episode_stats.reward[ep] = self.episode_reward
-        self.episode_stats.length[ep] = ep
-        self.reward_list.append(self.episode_reward)
-
-    def _decrease_epsilon(self):
-        if self.epsilon > self.epsilon_init:
-            self.epsilon -= self.epsilon_decay_rate
-
-    def _initialize_timestep(self):
-        """This method initialize the actual timestep."""
-        if self.render:
-            self.env.render()
-
-    def _initialize_evaluation_timestep(self):
-        """This method initialize the actual timestep."""
-        if self.render_evaluation:
-            self.env.render()
-
-    def _analyze_timestep(self):
-        """
-        """
-        self.episode_reward += self.reward
-        trans = self.memory.create_transition(self.state, self.action, self.reward, self.next_state)
-        self.memory.store(trans)
-        self.episode_history.append((self.next_state, self.action, self.reward))
-        self.state = self.next_state
-
-    def _analyze_evaluation_timestep(self):
-        """
-        """
-        self.episode_reward += self.reward
-        # trans = self.memory.create_transition(self.state, self.action, self.reward, self.next_state)
-        # self.memory.store(trans)
-        # self.episode_history.append((self.next_state, self.action, self.reward))
-        self.state = self.next_state
-
-    def _select_action(self, state, policy):
-        """
-        The agent performs the given action on the environment and returns:
-        observation: state information
-        reward: reward by the environment
-        done: flag to check if environment has terminated
-        info: additional information
-        """
-        return policy(state)  # Returns the action according to the policy
-
-    def _act(self, action):
-        """
-        The agent performs the given action on the environment and returns:
-        observation: state information
-        reward: reward by the environment
-        done: flag to check if environment has terminated
-        info: additional information
-        """
-        next_state, reward, done, _ = self.env.step(action)
-        return next_state, reward, done
-
-    def train(self, training_parameters, weights_file):
+    def learn(self, training_parameters, weights_file):
         """The agent uses his training method on the given environment"""
-        self._initialize_training(training_parameters, weights_file)
+        self._initialize_learning(training_parameters, weights_file)
         for ep in range(self.training_episodes):
             self._initialize_episode(ep)
             for t in range(self.training_timesteps):
@@ -189,6 +66,173 @@ class RL_Agent():
                     break
             self._analyze_episode(ep)
 
+###############################################################################
+# Initializing and analysing episodes and timesteps
+###############################################################################
+
+    def _initialize_learning(self, training_parameters):
+        """
+        This method initialize all members needed for the training.
+        """
+        self._unzip_training_parameters(training_parameters)
+        # self._initialize_test(self.test_parameters)
+
+        # Initialize Flags
+        self.save = False  # indicates if weight file has to be saved
+        self.render = False  # indicates if progess has to be rendered
+        self.store = False  # indicates if progress has to be stored
+        self.test = False  # indicates if testrun has to be started
+        self.update = False  # indicates if model has to be updated
+        # Initialize memory
+        self.memory_depth = 8  # magic: 2xD_state = 6 + action, reward
+        self.memory = TransitionBuffer(self.memory_size, self.memory_depth)
+
+        # Initialize report objects
+        self.report = TrainingReport(self.training_episodes)
+        self.reward_list = []  # Has to be a report
+        self.average_reward_list = []
+
+    def _unzip_training_parameters(self, training_parameters):
+        self.experiment_name = training_parameters['EXPERIMENT_NAME']
+        self.training_episodes = training_parameters['TRAINING_EPISODES']
+        self.training_timesteps = training_parameters['TRAINING_TIMESTEPS']
+        self.batch_size = training_parameters['BATCH_SIZE']
+        self.memory_size = training_parameters['MEMORY_SIZE']
+        self.auto_saver = training_parameters['AUTO_SAVER']
+
+        self.show_progress = training_parameters['SHOW_PROGRESS']
+        self.store_progress = training_parameters['STORE_PROGRESS']
+        self.test_each = training_parameters['TEST_EACH']
+        self.weights_file = training_parameters['TRAINING_FILE']
+
+        # Epsilon: Maybe new class for epsilon handling
+        self.epsilon_parameters = training_parameters['EPSILON_PARAM']
+        self.epsilon = self.epsilon_parameters['EPSILON']
+        self.epsilon_min = self.epsilon_parameters['EPSILON_MIN']
+        self.epsilon_init = self.epsilon_parameters['EPSILON_INIT']
+        self.epsilon_decay_rate = self.epsilon_parameters['EPS_DECAY_RATE']
+        self.const_decay = self.epsilon_parameters['CONST_DECAY']
+
+        # test parameters
+        self.test_parameters = training_parameters['TEST_PARAMETERS']
+
+    def _initialize_test(self, test_parameters):
+
+        self.test_episodes = test_parameters['TEST_EPISODES']
+        self.test_timesteps = test_parameters['TEST_TIMESTEPS']
+        self.show_test_progress = test_parameters['RENDER_TEST']  # Rework
+        print_timestamp("Starting intermediate test with {} episodes ({} timesteps each).".format(self.test_episodes, self.test_timesteps))
+        self.reward_list_test = []  # Has to be a report
+
+    def _initialize_test_episode(self, ep):
+        self._initialize_episode(ep)
+        self.render_test = self.set_flag_every(self.show_test_progress, ep)
+        self.env.seed(ep)  # For comparability
+        self.state = self.env.reset()
+
+    def _initialize_episode(self, ep):
+        """
+        Every show_progress_each steps the render flag is set to true.
+        Every save_weights_each steps the save flag is set to true.
+        """
+        # self.env.seed(np.random.randint(10000))  # For random env.
+        self.state = self.env.reset()
+        self.episode_reward = 0
+        self.episode_history = []  # Clearing the history
+        # FLAGS
+        if ep != 0:  # No flags for the first episode
+            self._set_episode_flags(ep)
+
+    def _set_episode_flags(self, ep):
+        """
+        This private method sets and resets the flags:
+          render: indicates if progess has to be rendered
+          store: indicates if progress has to be stored
+          save: indicates if weight file has to be saved
+          test: indicates if testrun has to be started
+        """
+        self.render = self.set_flag_every(self.show_progress, ep)
+        self.store = self.set_flag_every(self.store_progress, ep)
+        self.save = self.set_flag_every(self.auto_saver, ep)
+        self.test = self.set_flag_every(self.test_each, ep)
+        self.update = self.set_flag_from(10, ep)  # magic
+
+    def set_flag_every(self, var_input, ep):
+        if var_input is None:
+            return False
+        else:
+            return True if (ep % var_input == 0) else False
+
+    def set_flag_from(self, min_limit, ep):
+        return False if (ep < min_limit) else True
+
+    def _analyze_episode(self, ep):
+        # self.episode_stats.reward[ep] = self.episode_reward
+        # self.episode_stats.length[ep] = ep
+        # This will be handled witha report object
+        self.reward_list.append(self.episode_reward)
+
+    def _analyze_test_episode(self, ep):
+        # self.episode_stats.reward[ep] = self.episode_reward
+        # self.episode_stats.length[ep] = ep
+        # This will be handled witha report object
+        # self.report.add2testreport(ep, self.test_timesteps, self.episode_reward)
+        self.reward_list_test.append(self.episode_reward)
+
+    def _decrease_epsilon(self):
+        if self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_decay_rate
+
+    def _initialize_timestep(self):
+        """This method initialize the actual timestep."""
+        if self.render:
+            self.env.render()
+
+    def _initialize_test_timestep(self):
+        """This method initialize the actual timestep."""
+        if self.render_test:
+            self.env.render()
+
+    def _analyze_timestep(self):
+        """
+        """
+        self.episode_reward += self.reward
+        trans = self.memory.create_transition(self.state, self.action, self.reward, self.next_state)
+        self.memory.store(trans)
+        #  self.episode_history.append((self.next_state, self.action, self.reward))
+        self.state = self.next_state
+
+    def _analyze_test_timestep(self):
+        """
+        """
+        self.episode_reward += self.reward
+        self.state = self.next_state
+
+    def _select_action(self, state, policy):
+        """
+        The agent performs the given action on the environment and returns:
+        observation: state information
+        reward: reward by the environment
+        done: flag to check if environment has terminated
+        info: additional information
+        """
+        return policy(state)  # Returns the action according to the policy
+
+    def _act(self, action, vanilla):
+        """
+        The agent performs the given action on the environment and returns:
+        observation: state information
+        reward: reward by the environment
+        done: flag to check if environment has terminated
+        info: additional information
+        """
+        next_state, reward, done, _ = self.env.step(action, vanilla)
+        return next_state, reward, done
+
+    def _prepare_report(self):
+        average_test_reward = np.mean(self.reward_list_test)
+        report = [self.reward_list_test, average_test_reward]
+        return report
 
 ###############################################################################
 # Code dumpster
@@ -202,3 +246,23 @@ class RL_Agent():
         #     self.avg_reward_list.append(self.average_return)
 
 # print_timestamp('Start training with {} episodes'.format(self.training_episodes))
+
+        # if self.show_progress is None:
+        #     self.render = False
+        # else:
+        #     self.render = True if (ep % self.show_progress == 0) else False
+        #
+        # if self.store_progress is None:
+        #     self.store = False
+        # else:
+        #     self.store = True if (ep % self.store_progress == 0) else False
+        #
+        # if self.auto_saver is None:
+        #     self.save = False
+        # else:
+        #     self.save = True if (ep % self.auto_saver == 0) else False
+        #
+        # if self.test_each is None:
+        #     self.test = False
+        # else:
+        #     self.test = True if (ep % self.test_each == 0) else False

@@ -20,76 +20,81 @@ The following algorithms have been implemented:
 ###############################################################################
 # Import packages
 ###############################################################################
+import os
+from os import path
 import sys
 if "../" not in sys.path:
     sys.path.append("../")
-from lib.envs.pendulum import PendulumEnv
+# from lib.envs.pendulum import PendulumEnv  # original
+from pendulum import PendulumEnv, angle_normalize  # Overwritten
 
 from assets.agents.Dank_Agent import Dank_Agent
 import assets.policies.policies
 from assets.helperFunctions.timestamps import print_timestamp
-from assets.plotter.DankPlotters import PolarHeatmapPlotter
+from assets.plotter.DankPlotters import Plotter
+from assets.plotter.PolarHeatmapPlotter import PolarHeatmapPlotter
+
+import matplotlib.pyplot as plt
+
+main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
+print(main_path)
+
 
 ###############################################################################
 # Hyperparameter settings
 ###############################################################################
 
-# MAYBE USED NAMETUPLE INSTEAD HERE
 # Agent hyperparameters
 hyperparameters = {
-                    'STEP_LENGTH': 0.05,  # ?
-                    'GAMMA': 0.9,
-                    'LEARNING_RATE': 0.0001,
-                    'EPSILON_TYPE': 'exponential',
-                    'CONST_DECAY': 0.0,
-                    'EPSILON': 1,
-                    'EPSILON_INIT': 0.3,
-                    'EPS_DECAY_RATE': 0.001,
                     'D_ACTION': 25,
-                    'OPTIMIZER': 'NAdam'
+                    'GAMMA': 0.9,
+                    'OPTIMIZER': 'NAdam',  # Not used
+                    'LEARNING_RATE': 0.001,  # Not used
                     }
 
-# Evaluation parameters
-evaluation_parameters = {
-                        'EVALUATION_EPISODES': 20,
-                        'EVALUATION_TIMESTEPS': 500,
-                        'RENDER_EVALUATE': False
-                        }
+# Test parameters (for showing the agent's progress)
+test_parameters = {
+                    'TEST_EPISODES': 20, # Standard: 20
+                    'TEST_TIMESTEPS': 500, # Standard: 500
+                    'RENDER_TEST': None # Standard: None / 10
+                    }
+
+# Epsilon parameters
+eps_parameters = {
+                    'EPSILON_TYPE': 'linear',  # Not used yet
+                    'CONST_DECAY': 0.0,
+                    'EPSILON': 1,
+                    'EPSILON_MIN': 0.1,
+                    'EPSILON_INIT': 0.3,
+                    'EPS_DECAY_RATE': 0.00001,  # 0.002 (if episodic)
+                    }
 
 # Training parameters
-training_parameters = {
-                        'BATCH_SIZE': 32,  # 32
-                        'TRAINING_EPISODES': 200,
-                        'TRAINING_TIMESTEPS': 200,
-                        'MEMORY_SIZE': 24000, # 80000
-                        'AUTO_SAVER': 50,
-                        'SHOW_PROGRESS': None,
-                        'STORE_PROGRESS': 10,
-                        'EVALUATE_EACH': 10,
-                        'EVAL_PARAMETERS': evaluation_parameters
-                        # 'POLICY': "epsilon_greedy"
-                        # 'RENDER': False
-                        # learn_counter
-                        # memory_counter
-                        # self.memory = np.empty([self.memory_size,9])
-                       }
-
-test_parameters = {
-                        'TEST_EPISODES': 200,
-                        'TEST_TIMESTEPS': 500,
-                        'SHOW_EVALUATE': 10
-                        }
+train_parameters = {
+                    'EXPERIMENT_NAME': 'First_Working_Test',
+                    'TRAINING_EPISODES': 500,  # Standard: 200
+                    'TRAINING_TIMESTEPS': 200,  # Standard: 200
+                    'BATCH_SIZE': 32,  # Standard: 32
+                    'MEMORY_SIZE': 40000,  # Standard: 80000
+                    'AUTO_SAVER': 50,
+                    'SHOW_PROGRESS': None,
+                    'STORE_PROGRESS': 10,
+                    'TRAINING_FILE': "parameters/network.h5",
+                    'TEST_EACH': 10, # Standard: 10
+                    'EPSILON_PARAM': eps_parameters,
+                    'TEST_PARAMETERS': test_parameters
+                    }
 
 # Model file
 model = {
         'MODEL_TYPE': 'DQN',
-        'WEIGHT_FILE': None,
+        'WEIGHT_FILE_IN': None,
         'WEIGHT_FILE_OUT': "estimator.h5",
-        'LOAD_EXISTING_MODEL': True,
+        'LOAD_EXISTING_MODEL': False,
         'ACTIVATION': 'relu',
         'LOSS': 'mse',
         'OPTIMIZER': 'Nadam',
-        'LEARNING_RATE': 0.0001,
+        'LEARNING_RATE': 0.001, # Like Lior's code
         }
 
 
@@ -105,18 +110,62 @@ reward_function_sweep = ['Vanilla', 'Heuristic1', 'Heuristic2']
 ###############################################################################
 # Main starts here
 ###############################################################################
-print_timestamp('Plotting')
-heat = PolarHeatmapPlotter()
-heat.plot()
-print_timestamp('Started main program')
+# print_timestamp('Plotting')
+# heat = PolarHeatmapPlotter(2)
+# heat.plot()
+print_timestamp('Started experiment program')
+# main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
+exp_directory = train_parameters['EXPERIMENT_NAME']
+print(exp_directory)
+file_index = 0
+while path.exists(exp_directory + '%s' % file_index):
+    file_index += 1
+
+idx_file_dir = exp_directory + '{}'.format(file_index)
+train_parameters['EXPERIMENT_NAME'] = idx_file_dir
+os.makedirs(idx_file_dir)
+os.makedirs(idx_file_dir+'/results/policy_plots')
+os.makedirs(idx_file_dir+'/results/parameters')
+os.makedirs(idx_file_dir+'/results/plots')
+os.makedirs(idx_file_dir+'/results/logs')
+os.makedirs(idx_file_dir+'/results/CSV')
+print_timestamp('Started experiment {}'.format(idx_file_dir))
 
 env = PendulumEnv()  # Create some environments
 dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
-# memeAgent = DQN_Agent
 
 # Start a training session with a given weight_file (e.g.)
-training_weight_file = model["WEIGHT_FILE"]
-training_report = dankAgent.train(training_parameters, training_weight_file)
+training_report, test_report = dankAgent.learn(train_parameters)
+# print(training_report)
+# print(test_report)
+
+dir_path = main_path + '/' + idx_file_dir
+
+plt.figure()
+plt.plot(training_report,label = "DankAgent")
+plt.xlabel("Episode")
+plt.ylabel("Reward")
+plt.legend()
+plt.savefig(dir_path+'/results/plots/training_report.png')
+plt.savefig(dir_path+'/results/plots/training_report.pdf')
+
+plt.figure()
+plt.plot(test_report,label = "DankAgent")
+plt.xlabel("Episode")
+plt.ylabel("Average Test Reward")
+plt.legend()
+plt.savefig(dir_path+'/results/plots/test_report.png')
+plt.savefig(dir_path+'/results/plots/test_report.pdf')
+plt.show()
+# dankplotter = Plotter
+# plt.figure()
+# for idx,val in enumerate(mean_summary):
+#     plt.plot(val[0], label = '{}'.format(features[idx]))
+# plt.plot(merged_mean, label ='mean of means')
+# plt.plot(merged_mean+mean_std[0], label='+', linestyle = '-.')
+# plt.plot(merged_mean-mean_std[0], label='-', linestyle = '-.')
+# plt.legend()
+# plt.show()
 
 # report = dankAgent.perform(model)  # perform with weights
 # dankAgent.present() # Plot the results
@@ -124,3 +173,9 @@ training_report = dankAgent.train(training_parameters, training_weight_file)
 ###############################################################################
 # Code dumpster
 ###############################################################################
+
+# test_parameters = {
+#                     'TEST_EPISODES': 200,
+#                     'TEST_TIMESTEPS': 500,
+#                     'SHOW_EVALUATE': 10
+#                     }
