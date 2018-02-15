@@ -41,7 +41,6 @@ class Dank_Agent(_DQN_Agent):
         """
         # Unzip the batch
         batch_state, batch_action, batch_reward, batch_state_next = self.memory.unzip_batch(batch_memory)
-        # print_timestamp("Actual Batch: {}".format(batch_state))
         # Prediction time
         q_target = self.estimator.model.predict(batch_state)
         q_next1 = self.estimator.model.predict(batch_state_next)
@@ -52,9 +51,6 @@ class Dank_Agent(_DQN_Agent):
 
         batch_index11 = np.arange(self.batch_size, dtype=np.int32)
         q_next_max = q_next2[batch_index11, q_next_max_idx]
-        # print("q_next2: {}".format(q_next2))
-        # print("q_next_max: {}".format(q_next_max))
-        # print(q_next_max)
         q_target[batch_index11, batch_action] = batch_reward + self.gamma * q_next_max
 
         self.estimator.model.fit(batch_state, q_target, batch_size=self.batch_size, epochs=1, verbose=0)
@@ -71,7 +67,7 @@ class Dank_Agent(_DQN_Agent):
 # Training method
 ###############################################################################
 
-    def learn(self, training_parameters):
+    def learn(self, training_parameters, run=None):
         """The agent uses his training method on the given environment"""
         self._initialize_learning(training_parameters)
         for ep in range(self.training_episodes):
@@ -80,7 +76,7 @@ class Dank_Agent(_DQN_Agent):
                 self._initialize_timestep() # Just render
                 self.Q = self.estimator.predict(self.state)
                 self.action = epsilon_greedy(self.Q, self.epsilon, self.action_space)
-                self.next_state, self.reward, done = self._act(self.action, False)
+                self.next_state, self.reward, done = self._act(self.action, True)
                 self._analyze_timestep()
                 if self.update:
                     self.update_on_batch(self.memory.get_batch(self.batch_size))
@@ -88,11 +84,10 @@ class Dank_Agent(_DQN_Agent):
                     break
                 self._decrease_epsilon()
             self._analyze_episode(ep)
-            print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format(ep, self.training_episodes, self.episode_reward.round(2), self.epsilon))
+            print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format((ep+1), self.training_episodes, self.episode_reward, self.epsilon))
 
 
             if self.update:
-                # print_timestamp("Updating target model weights")
                 self.update_target_model()
             if self.test:
                 test_report = self.run_test(self.test_parameters)
@@ -100,8 +95,8 @@ class Dank_Agent(_DQN_Agent):
                 self.average_reward_list.append(average_reward)
                 print_timestamp('Test ended with average reward: {}'.format(average_reward))
                 print_timestamp('Plotting')
-                heat = PolarHeatmapPlotter(2, self.target, self.experiment_name)
-                heat.plot(ep, average_reward)
+                heat = PolarHeatmapPlotter(2, self.target, self.experiment_dir)
+                heat.plot(ep, average_reward, run)
         return self.reward_list, self.average_reward_list
 
 
@@ -128,6 +123,23 @@ class Dank_Agent(_DQN_Agent):
             self._analyze_test_episode(ep)
         report = self._prepare_report()
         return report
+
+###############################################################################
+# Full learning test
+###############################################################################
+
+    def run_n_learning_sessions(self, N_sessions, train_parameters):
+        report = []
+        for run in range(N_sessions):
+            self._reset_agent()
+            print_timestamp('Starting Run {}'.format(run))
+            training_report, test_report = self.learn(train_parameters, run)
+            report.append([training_report, test_report, self.test_each])
+        return report
+
+    def _reset_agent(self):
+        self.estimator = self._build_model(self.architecture)
+        self.target = self._build_model(self.architecture)
 
 ###############################################################################
 # Parameter sweeping method

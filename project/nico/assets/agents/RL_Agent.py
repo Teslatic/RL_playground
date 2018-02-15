@@ -86,14 +86,14 @@ class RL_Agent():
         # Initialize memory
         self.memory_depth = 8  # magic: 2xD_state = 6 + action, reward
         self.memory = TransitionBuffer(self.memory_size, self.memory_depth)
-
+        self.memory.reset_memory()
         # Initialize report objects
         self.report = TrainingReport(self.training_episodes)
         self.reward_list = []  # Has to be a report
         self.average_reward_list = []
 
     def _unzip_training_parameters(self, training_parameters):
-        self.experiment_name = training_parameters['EXPERIMENT_NAME']
+        self.experiment_dir = training_parameters['EXPERIMENT_DIR']
         self.training_episodes = training_parameters['TRAINING_EPISODES']
         self.training_timesteps = training_parameters['TRAINING_TIMESTEPS']
         self.batch_size = training_parameters['BATCH_SIZE']
@@ -135,7 +135,6 @@ class RL_Agent():
         Every show_progress_each steps the render flag is set to true.
         Every save_weights_each steps the save flag is set to true.
         """
-        # self.env.seed(np.random.randint(10000))  # For random env.
         self.state = self.env.reset()
         self.episode_reward = 0
         self.episode_history = []  # Clearing the history

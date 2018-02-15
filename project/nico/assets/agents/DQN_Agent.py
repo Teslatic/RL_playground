@@ -16,8 +16,6 @@ class _DQN_Agent(RL_Agent):
         Calls the RL_Agent init method.
         Then creates an architecture file which is then used to build the estimator model.
         """
-        # self._init_env_parameters(env)
-        # self._unzip_hyperparameters(hyperparameters)
         super().__init__(env, hyperparameters)
         self.architecture = self._create_architecture(model)
         self.estimator = self._build_model(self.architecture)

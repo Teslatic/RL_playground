@@ -9,7 +9,7 @@ import time
 import datetime
 
 class Plotter():
-    def __init__(self, training_report, test_report):
+    def __init__(self, experiment_dir):
         """
         histories of every run, could be a dictionary, which maps to the
         according feature?
@@ -23,11 +23,12 @@ class Plotter():
                             }
         (for the rest i will just assume this structure at hand)
         """
+        self.experiment_dir = experiment_dir
         # number of runs per feature to test
-        self.runs = report.run_num
-        self.histories = report.histories
+        # self.runs = report.run_num
+        # self.histories = report.histories
         # self.features is a list of features that are tested, e.g. the        batch sizes [32, 64, 128, 256]
-        self.features = _get_features()
+        # self.features = _get_features()
 
 
     # extract features from histories dictionary as a set and converts it
@@ -122,16 +123,73 @@ class Plotter():
         # merge all means into one central mean
         merged_mean = np.mean(np.mean(merged_hist,axis=0),axis=0)
 
-    def save(self, absolute_path):
+    def _save_plot(self, name):
         now = datetime.datetime.now()
-        file_string = absolute_path + '/results/policy_plots/'+now.strftime('%Y%m%d_%H%M%S') + '_Policy.png'
+
+        file_string_png = self.experiment_dir + '/results/plots/' + now.strftime('%Y%m%d_%H%M%S') + name + '.png'
+        file_string_png = '{}/results/plots/png/{}_{}.png'.format(self.experiment_dir, now.strftime('%Y%m%d_%H%M%S'), name)
+        file_string_pdf = '{}/results/plots/pdf/{}_{}.pdf'.format(self.experiment_dir, now.strftime('%Y%m%d_%H%M%S'), name)
         # file_string = now.strftime('%Y%m%d_%H%M%S')+'_Policy.png'
-        plt.savefig(file_string)
+        plt.savefig(file_string_png)
+        plt.savefig(file_string_pdf)
+
 
 ###############################################################################
 # Plotting funtions
 ###############################################################################
 
+    def create_single_training_plot(self, training_report, run_num=None):
+        """
+        Make sure that the directory has been created by the FileManager.
+        """
+        plt.figure()
+        plt.plot(training_report,label = "DankAgent")
+        plt.xlabel("Training episode")
+        plt.ylabel("Total episode reward")
+        plt.legend()
+        if run_num is None:
+            self._save_plot('training_report')
+        else:
+            self._save_plot('training_report_run{}'.format(run_num))
+
+    def create_single_test_plot(self, test_report, run_num=None, testeach=None):
+        """
+        Make sure that the directory has been created by the FileManager.
+        """
+        plt.figure()
+        if testeach is None:
+            plt.plot(test_report, label = "DankAgent")
+        else:
+            x_data = testeach*np.arange(len(test_report))
+            plt.plot(x_data, test_report, label = "DankAgent")
+        plt.xlabel("Test episode")
+        plt.ylabel("Average Test Reward")
+        plt.legend()
+        if run_num is None:
+            self._save_plot('test_report')
+        else:
+            self._save_plot('test_report_run{}'.format(run_num))
+
+    def create_multiple_training_plots(self, multiReport):
+        N_runs = len(multiReport)
+        for run in range(N_runs):
+            data_train = multiReport[run][0]
+            data_test = multiReport[run][1]
+            self.create_single_training_plot(data_train, run)
+            self.create_single_test_plot(data_test, run)
+
+        # if run_num is None:
+        #     plt.savefig(self.experiment_dir+'/results/plots/test_report.png')
+        #     plt.savefig(self.experiment_dir+'/results/plots/test_report.pdf')
+        # else:
+        #     plt.savefig(self.experiment_dir+'/results/plots/test_report_run{}.png'.format(run_num))
+        #     plt.savefig(self.experiment_dir+'/results/plots/test_report_run{}.pdf'.format(run_num)')
+
+    def show_all_plots(self):
+        """
+        Make sure that the directory has been created by the FileManager.
+        """
+        plt.show()
 
     def plot_training_report(self):
         """

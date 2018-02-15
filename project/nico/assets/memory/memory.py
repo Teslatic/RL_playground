@@ -11,9 +11,11 @@ class TransitionBuffer():
         """
         self.memory_size = memory_size
         self.memory_depth = memory_depth
-        self.memory = np.empty([self.memory_size, self.memory_depth])
+        self.reset_memory()
+
+    def reset_memory(self):
         self.memory_counter = 0
-        self.learn_counter = 0
+        self.memory = np.empty([self.memory_size, self.memory_depth])
         self.batch_memory = []
 
     def create_transition(self, state, action, reward, next_state):

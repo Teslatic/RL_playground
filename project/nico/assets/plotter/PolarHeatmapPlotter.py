@@ -10,8 +10,9 @@ from assets.policies.policies import greedy_batch
 
 class PolarHeatmapPlotter():
     def __init__(self, max_r, estimator, directory):
-        main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
-        self.dir_path = main_path + '/' + directory
+        # main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
+
+        self.dir_path = directory
         #create 5000 Random points distributed within the circle radius 2
         self.max_r = max_r
         self.max_theta = 2.0 * np.pi
@@ -60,26 +61,22 @@ class PolarHeatmapPlotter():
 
         plt.tight_layout()
         plt.suptitle('Policy in episode {} with reward {}'.format(ep, reward))
-
-        # fig_right.set_title('Policy ({}) in episode {} with reward {}'.format(direction, ep, reward))
-        # plt.plot()
-        # fig.set_theta_zero_location("N")
-
-        # plt.thetagrids([theta * 15 for theta in range(360//15)])
-        # plt.rgrids([.1 * _ for _ in range(1, 2*self.max_r)])
         return plt.plot()
 
-    def save(self, absolute_path):
+    def save(self, absolute_path, run=None):
         now = datetime.datetime.now()
-        file_string = '/{}/results/policy_plots/{}_policy.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'))
+        if run is None:
+            file_string = '/{}/results/policy_plots/{}_policy.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'))
+        else:
+            file_string = '/{}/results/policy_plots/{}_policy_run{}.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'), run)
         plt.savefig(file_string)
 
     def update(self):
         pass
 
-    def plot(self, ep, reward):
+    def plot(self, ep, reward, run=None):
         self.fig = self._create_plot(self.theta, self.r, self.data_clw, self.data_cclw, ep, reward, 'clockwise')
-        self.save(self.dir_path)
+        self.save(self.dir_path, run)
         # self.fig = self._create_plot(self.theta, self.r, self.data_cclw, ep, reward, 'counterclockwise')
         # self.save(self.dir_path, 'counterclockwise')
 
