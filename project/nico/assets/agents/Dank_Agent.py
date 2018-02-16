@@ -1,9 +1,14 @@
 import numpy as np
+
+import pickle
+
 from assets.agents.DQN_Agent import _DQN_Agent
 from assets.helperFunctions.timestamps import print_timestamp
 from assets.helperFunctions.discretize import discretize
 from assets.policies.policies import epsilon_greedy, greedy, greedy_batch
+from assets.plotter.DankPlotters import Plotter
 from assets.plotter.PolarHeatmapPlotter import PolarHeatmapPlotter
+import assets.helperFunctions.FileManager as fm
 
 class Dank_Agent(_DQN_Agent):
     """
@@ -29,7 +34,6 @@ class Dank_Agent(_DQN_Agent):
         super().__init__(env, hyperparameters, model)
         # Building a target model with the same architecture as the estimator.
         self.target = self._build_model(self.architecture)
-
 
 ###############################################################################
 # Update method
@@ -86,17 +90,26 @@ class Dank_Agent(_DQN_Agent):
             self._analyze_episode(ep)
             print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format((ep+1), self.training_episodes, self.episode_reward, self.epsilon))
 
-
             if self.update:
                 self.update_target_model()
+
             if self.test:
                 test_report = self.run_test(self.test_parameters)
                 average_reward = test_report[1].round(2)  # dictionary
                 self.average_reward_list.append(average_reward)
                 print_timestamp('Test ended with average reward: {}'.format(average_reward))
                 print_timestamp('Plotting')
-                heat = PolarHeatmapPlotter(2, self.target, self.experiment_dir)
+                heat = PolarHeatmapPlotter(2, self.target, self.exp_dir)
                 heat.plot(ep, average_reward, run)
+
+        # Plotting time
+
+        self.plotter.plot_training(self.exp_dir, self.reward_list)
+        self.plotter.plot_test(self.exp_dir, self.average_reward_list, testeach=self.test_each)
+
+        pickle.dump(self.reward_list, open('{}/report/training_report.p'.format(self.exp_dir), 'wb'))
+        pickle.dump(self.average_reward_list, open('{}/report/test_report.p'.format(self.exp_dir), 'wb'))
+
         return self.reward_list, self.average_reward_list
 
 
@@ -121,21 +134,36 @@ class Dank_Agent(_DQN_Agent):
                 if done:
                     break
             self._analyze_test_episode(ep)
-        report = self._prepare_report()
-        return report
+        return self.create_test_report(self.reward_list_test)
 
 ###############################################################################
 # Full learning test
 ###############################################################################
 
-    def run_n_learning_sessions(self, N_sessions, train_parameters):
-        report = []
-        for run in range(N_sessions):
-            self._reset_agent()
-            print_timestamp('Starting Run {}'.format(run))
+    def run_n_learning_sessions(self, N_runs, train_parameters):
+        # Create directories...
+        actual_dir = train_parameters['ACTUAL_DIR']
+        fm.create_plots_dir(actual_dir)
+        fm.create_report_dir(actual_dir)
+        # ... and report object
+        multireport = []
+
+        # Perform N runs
+        for run in range(N_runs):
+            self._reset_agent()  # reset agent models
+            # train_parameters['ACTUAL_DIR'] = '{}/run{}'.format(actual_dir, run)
+            print_timestamp('Starting run {}'.format(run))
             training_report, test_report = self.learn(train_parameters, run)
-            report.append([training_report, test_report, self.test_each])
-        return report
+            # self.plotter.plot_training(actual_dir, training_report, run)
+            # self.plotter.plot_test(actual_dir, test_report, run, self.test_each)
+            multireport.append([training_report, test_report, self.test_each])
+        # Create plot...
+
+        # ... and save the report file
+        pickle.dump(multireport, open('{}/report/multiReport.p'.format(actual_dir), 'wb'))
+        self.plotter.plot_test_multireport(multireport, actual_dir, 'multireport_test')
+        self.plotter.plot_training_multireport(multireport, actual_dir, 'multireport_training')
+        return multireport
 
     def _reset_agent(self):
         self.estimator = self._build_model(self.architecture)
@@ -145,15 +173,40 @@ class Dank_Agent(_DQN_Agent):
 # Parameter sweeping method
 ###############################################################################
 
-# # Sweeping one parameter
-# for sweep_parameter in batch_size_sweep:
-#     training_parameters["BATCH_SIZE"] = sweep_parameter
-#     print_timestamp('Parameter Sweep: Starting training with batchsize
-#                     {}'.format(sweep_parameter))
-#     dankAgent.train(training_parameters, training_weight_file)  # Train agent
-#     report = dankAgent.perform(model)  # perform with weights
-#     dankAgent.present() # Plot the results
+    def parameter_sweep(self, parameter, sweep_vector, train_parameters, N_runs):
+        """
+        Sweeping one parameter according to the sweep_vector
+        """
+        # Create directories...
+        actual_dir = train_parameters['ACTUAL_DIR']
 
+        fm.create_report_dir(actual_dir)
+        fm.create_plots_dir(actual_dir)
+        # ... and report object
+        sweepingReport = {}
+
+
+        description = train_parameters['DESCRIPTION']
+        descriptionfile = open('{}/description.txt'.format(actual_dir),"w")
+        descriptionfile.write(description)
+        descriptionfile.close()
+
+        # Sweep through the parameter vector
+        for sweep_parameter in sweep_vector:
+            # Adjust the actual directory
+            train_parameters['ACTUAL_DIR'] = '{}/{}_{}'.format(actual_dir, parameter, sweep_parameter)
+            # Adjust the sweeped parameter
+            train_parameters[parameter] = sweep_parameter
+
+            print_timestamp('Parameter Sweep: Starting sweep on parameter {} with value {}'.format(parameter, sweep_parameter))
+            multiReport = self.run_n_learning_sessions(N_runs, train_parameters)
+            # Add multiReport to the sweepingReport
+            sweepingReport.update({sweep_parameter: multiReport})
+        # Create plot...
+
+        # ... and save the report file
+        pickle.dump(sweepingReport, open('{}/report/sweepReport.p'.format(actual_dir), 'wb'))
+        return sweepingReport
 
 
 ###############################################################################

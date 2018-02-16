@@ -66,9 +66,9 @@ class PolarHeatmapPlotter():
     def save(self, absolute_path, run=None):
         now = datetime.datetime.now()
         if run is None:
-            file_string = '/{}/results/policy_plots/{}_policy.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'))
+            file_string = '/{}/policy_plots/{}_policy.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'))
         else:
-            file_string = '/{}/results/policy_plots/{}_policy_run{}.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'), run)
+            file_string = '/{}/policy_plots/{}_policy_run{}.png'.format(absolute_path,  now.strftime('%Y%m%d_%H%M%S'), run)
         plt.savefig(file_string)
 
     def update(self):

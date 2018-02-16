@@ -2,22 +2,40 @@ import os
 from os import path
 from assets.helperFunctions.timestamps import print_timestamp
 
-def create_experiment(dir_path, exp_name):
+def create_free_path(dir_path, exp_name):
+    """
+    Finds the next free index for the experiment name.
+    """
+    exp_directory = dir_path + '/' + exp_name
+    file_index = 1
+    while path.exists(exp_directory + '%s' % file_index):
+        file_index += 1
+    return exp_directory + '{}'.format(file_index)
+
+def create_experiment(exp_path):
     """
     Creates the folder structure which is necessary to save files.
     """
-    print_timestamp('Started experiment {}'.format(exp_name))
-    exp_directory = dir_path + '/experiments/' + exp_name
-    file_index = 0
-    while path.exists(exp_directory + '%s' % file_index):
-        file_index += 1
+    # print_timestamp('Created  at path {}'.format(exp_path))
+    os.makedirs(exp_path)
+    os.makedirs(exp_path+'/policy_plots')
+    os.makedirs(exp_path+'/parameters')
+    create_plots_dir(exp_path)
+    create_report_dir(exp_path)
+    # os.makedirs(exp_path+'/logs')
+    # os.makedirs(exp_path+'/CSV')
 
-    idx_exp_dir = exp_directory + '{}'.format(file_index)
-    os.makedirs(idx_exp_dir)
-    os.makedirs(idx_exp_dir+'/results/policy_plots')
-    os.makedirs(idx_exp_dir+'/results/parameters')
-    os.makedirs(idx_exp_dir+'/results/plots/png')
-    os.makedirs(idx_exp_dir+'/results/plots/pdf')
-    os.makedirs(idx_exp_dir+'/results/logs')
-    os.makedirs(idx_exp_dir+'/results/CSV')
+def create_report_dir(exp_path):
+    os.makedirs(exp_path+'/report')
+
+def create_plots_dir(exp_path):
+    os.makedirs(exp_path+'/plots/png')
+    os.makedirs(exp_path+'/plots/pdf')
+
+def create_path_and_experiment(dir_path, exp_name):
+    """
+    Creates the path and the folder structure which is necessary to save files.
+    """
+    idx_exp_dir = create_free_path(dir_path, exp_name)
+    create_experiment(idx_exp_dir)
     return idx_exp_dir

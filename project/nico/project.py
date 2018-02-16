@@ -26,20 +26,33 @@ import sys
 if "../" not in sys.path:
     sys.path.append("../")
 # from lib.envs.pendulum import PendulumEnv  # original
-from pendulum import PendulumEnv, angle_normalize  # Overwritten
 
+import matplotlib.pyplot as plt
+import pickle
+import csv
+
+
+from pendulum import PendulumEnv, angle_normalize  # Overwritten
 from assets.agents.Dank_Agent import Dank_Agent
 import assets.policies.policies
 from assets.helperFunctions.timestamps import print_timestamp
 from assets.plotter.DankPlotters import Plotter
 from assets.plotter.PolarHeatmapPlotter import PolarHeatmapPlotter
-from assets.helperFunctions.FileManager import create_experiment
-import matplotlib.pyplot as plt
+from assets.helperFunctions.FileManager import *
+
 
 ###############################################################################
-# Experiment name
+# Experiment name - Better have no spaces in between
 ###############################################################################
-experiment_name = 'MultioleRunsTest'
+
+experiment_name = input("Please enter your experiment name: ")
+
+# experiment_name = 'Multiplot'
+description = 'Copy-pasta the hyperparameter set here'
+main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
+all_exp_path = '{}/{}'.format(main_path, 'experiments')
+exp_root_dir = create_free_path(all_exp_path, experiment_name)
+# description = input("Please enter a short description of the test: ")
 
 ###############################################################################
 # Hyperparameter settings
@@ -47,16 +60,14 @@ experiment_name = 'MultioleRunsTest'
 
 # Agent hyperparameters
 hyperparameters = {
-                    'D_ACTION': 25,
-                    'GAMMA': 0.9,
-                    # 'OPTIMIZER': 'NAdam',  # Not used
-                    # 'LEARNING_RATE': 0.001,  # Not used
+                    'D_ACTION': 25,  # Standard 25
+                    'GAMMA': 0.9,  # Standard 0.9
                     }
 
 # Test parameters (for showing the agent's progress)
 test_parameters = {
-                    'TEST_EPISODES': 5, # Standard: 20
-                    'TEST_TIMESTEPS': 400, # Standard: 500
+                    'TEST_EPISODES': 20, # Standard: 20
+                    'TEST_TIMESTEPS': 500, # Standard: 500
                     'RENDER_TEST': None # Standard: None / 10
                     }
 
@@ -64,24 +75,26 @@ test_parameters = {
 eps_parameters = {
                     'EPSILON_TYPE': 'linear',  # Not used yet
                     'CONST_DECAY': 0.0,
-                    'EPSILON': 1,
-                    'EPSILON_MIN': 0.1,
+                    'EPSILON': 1, # Standard: 1
+                    'EPSILON_MIN': 0.1, # Standard: 0.1
                     'EPSILON_INIT': 0.3,
                     'EPS_DECAY_RATE': 0.00005,  # 0.00001 (if stepwise) 0.002 (if episodic)
                     }
 
 # Training parameters
 train_parameters = {
-                    'EXPERIMENT_DIR': 'First_Working_Test',
-                    'TRAINING_EPISODES': 150,  # Standard: 200
-                    'TRAINING_TIMESTEPS': 50,  # Standard: 200
+                    'EXPERIMENT_ROOT_DIR': exp_root_dir,
+                    'ACTUAL_DIR': exp_root_dir,
+                    'DESCRIPTION': description,
+                    'TRAINING_EPISODES': 200,  # Standard: 200
+                    'TRAINING_TIMESTEPS': 200,  # Standard: 200
                     'BATCH_SIZE': 32,  # Standard: 32
-                    'MEMORY_SIZE': 40000,  # Standard: 80000
+                    'MEMORY_SIZE': 40000,  # Standard: TRAINING_EPISODES*TRAINING_TIMESTEPS*N (with N~1...5)
                     'AUTO_SAVER': 50,
                     'SHOW_PROGRESS': None,
                     'STORE_PROGRESS': 10,
                     'TRAINING_FILE': "parameters/network.h5",
-                    'TEST_EACH': 10, # Standard: 10
+                    'TEST_EACH': 5, # Standard: 10
                     'EPSILON_PARAM': eps_parameters,
                     'TEST_PARAMETERS': test_parameters
                     }
@@ -103,47 +116,72 @@ model = {
 # Parameter sweeps
 ###############################################################################
 
-batch_size_sweep = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-gamma_sweep = [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1]
-optimizer_sweep = ['NAdam', 'Adam']  # Define other optimizers as well.
-reward_function_sweep = ['Vanilla', 'Heuristic1', 'Heuristic2']
+sweeps =    {
+            'N_runs': 5,
+            'BATCH_SIZE': [8, 16, 32, 64, 256],
+            # 'BATCH_SIZE': [8, 16],
+            'GAMMA': [0, .2, .4, .6, .8, .9, 1],
+            'LEARNING_RATE': [1., .1, .01, .001, .0001],
+            'OPTIMIZER': ['Adam','Nadam','SGD', 'RMSprop'],
+            'REWARD_FNC': ['Vanilla', 'Heuristic1', 'Heuristic2'],
+            'TAU': [1, 10, 50, 100, 200, 1000]
+            }
 
 ###############################################################################
 # Main starts here
 ###############################################################################
 
-main_path = path.dirname(path.abspath(sys.modules['__main__'].__file__))
-exp_dir = create_experiment(main_path, experiment_name)
-train_parameters['EXPERIMENT_DIR'] = exp_dir
-
 env = PendulumEnv()  # Create some environments
 dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
-dankPlotter = Plotter(exp_dir)
+
+###############################################################################
+# SWEEPS
+###############################################################################
+# BATCH_SIZE
+# dankAgent.parameter_sweep('BATCH_SIZE', sweeps['BATCH_SIZE'], train_parameters, sweeps['N_runs'])
+
+# OPTIMIZER
+# dankAgent.parameter_sweep('OPTIMIZER', sweeps['OPTIMIZER'], train_parameters, sweeps['N_runs'])
+
+# GAMMA
+dankAgent.parameter_sweep('GAMMA', sweeps['GAMMA'], train_parameters, sweeps['N_runs'])
+
+# TAU
+# dankAgent.parameter_sweep('TAU', sweeps['TAU'], train_parameters, sweeps['N_runs'])
+
+# LEARNING_RATE
+# dankAgent.parameter_sweep('LEARNING_RATE', sweeps['LEARNING_RATE'], train_parameters, sweeps['N_runs'])
 
 
-# Start a training session with a given training parameters (e.g.)
-# training_report, test_report = dankAgent.learn(train_parameters)
-multiReport = dankAgent.run_n_learning_sessions(5, train_parameters)
 
-dankPlotter.create_multiple_training_plots(multiReport)
-# dankPlotter.create_single_training_report(training_report)
-# dankPlotter.create_single_test_report(test_report)
-# dankPlotter.show_all_plots()
+# read_sR = pickle.load(open('{}/report/sweepReport.p'.format(exp_root_dir), 'rb'))
+# plotter = Plotter('notused')
 
 
-# dankplotter = Plotter
-# plt.figure()
-# for idx,val in enumerate(mean_summary):
-#     plt.plot(val[0], label = '{}'.format(features[idx]))
-# plt.plot(merged_mean, label ='mean of means')
-# plt.plot(merged_mean+mean_std[0], label='+', linestyle = '-.')
-# plt.plot(merged_mean-mean_std[0], label='-', linestyle = '-.')
-# plt.legend()
-# plt.show()
 
-# report = dankAgent.perform(model)  # perform with weights
-# dankAgent.present() # Plot the results
 
 ###############################################################################
 # Code dumpster
 ###############################################################################
+
+# Start a training session with a given training parameters (e.g.)
+# training_report, test_report = dankAgent.learn(train_parameters)
+# dankPlotter.create_single_training_report(training_report)
+# dankPlotter.create_single_test_report(test_report)
+
+
+# multiReport = dankAgent.run_n_learning_sessions(5, train_parameters)
+# dankPlotter.create_multiple_training_plots(multiReport)
+
+# with open('dict.csv', 'wb') as csv_file:
+#     writer = csv.writer(csv_file)
+#     for key, value in hyperparameters.items():
+#        writer.writerow([key, value])
+#
+# # To read it back:
+#
+# with open('dict.csv', 'rb') as csv_file:
+#     reader = csv.reader(csv_file)
+#     mydict = dict(reader)
+#
+# print(mydict)

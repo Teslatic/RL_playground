@@ -1,6 +1,6 @@
 # from os import path
 import numpy as np
-
+# import pickle
 # if "../" not in sys.path:
 #     sys.path.append("../")
 from assets.helperFunctions.timestamps import print_timestamp
@@ -8,6 +8,10 @@ from assets.memory.memory import TransitionBuffer
 from assets.policies.policies import make_epsilon_greedy_policy
 from assets.helperFunctions.discretize import discretize
 from assets.reports.Report import TrainingReport
+from assets.plotter.DankPlotters import Plotter
+# from assets.helperFunctions.FileManager import
+import assets.helperFunctions.FileManager as fm
+
 
 class RL_Agent():
     """Basic RL agent class"""
@@ -43,7 +47,6 @@ class RL_Agent():
         """Unzips the hyperparameter set and writes it into single variables"""
         self.D_action = hyperparameters['D_ACTION']
         self.gamma = hyperparameters['GAMMA']
-        # self.learning_rate = hyperparameters['LEARNING_RATE']
 
 ###############################################################################
 # General layout of an RL task
@@ -75,7 +78,13 @@ class RL_Agent():
         This method initialize all members needed for the training.
         """
         self._unzip_training_parameters(training_parameters)
-        # self._initialize_test(self.test_parameters)
+
+        # Create folder structure
+        # fm.create_experiment(training_parameters['EXPERIMENT_DIR'])
+        self.exp_dir = fm.create_path_and_experiment(self.exp_dir, 'run')
+
+        # Create the Plotter
+        self.plotter = Plotter(self.exp_root_dir)
 
         # Initialize Flags
         self.save = False  # indicates if weight file has to be saved
@@ -93,7 +102,8 @@ class RL_Agent():
         self.average_reward_list = []
 
     def _unzip_training_parameters(self, training_parameters):
-        self.experiment_dir = training_parameters['EXPERIMENT_DIR']
+        self.exp_root_dir = training_parameters['EXPERIMENT_ROOT_DIR']
+        self.exp_dir = training_parameters['ACTUAL_DIR']
         self.training_episodes = training_parameters['TRAINING_EPISODES']
         self.training_timesteps = training_parameters['TRAINING_TIMESTEPS']
         self.batch_size = training_parameters['BATCH_SIZE']
@@ -228,40 +238,11 @@ class RL_Agent():
         next_state, reward, done, _ = self.env.step(action, vanilla)
         return next_state, reward, done
 
-    def _prepare_report(self):
-        average_test_reward = np.mean(self.reward_list_test)
-        report = [self.reward_list_test, average_test_reward]
-        return report
+    def create_test_report(self, reward_list):
+        average_test_reward = np.mean(reward_list)
+        testReport = [reward_list, average_test_reward]
+        return testReport
 
 ###############################################################################
 # Code dumpster
 ###############################################################################
-        #
-        # avg_reward = np.mean(self.episode_stats.reward)
-        # print("average reward",avg_reward)
-        # self.episode_stats.reward.append(self.episode_reward)
-        # self.episode_stats.length.append(self.episode_length)
-        # if self.store:
-        #     self.avg_reward_list.append(self.average_return)
-
-# print_timestamp('Start training with {} episodes'.format(self.training_episodes))
-
-        # if self.show_progress is None:
-        #     self.render = False
-        # else:
-        #     self.render = True if (ep % self.show_progress == 0) else False
-        #
-        # if self.store_progress is None:
-        #     self.store = False
-        # else:
-        #     self.store = True if (ep % self.store_progress == 0) else False
-        #
-        # if self.auto_saver is None:
-        #     self.save = False
-        # else:
-        #     self.save = True if (ep % self.auto_saver == 0) else False
-        #
-        # if self.test_each is None:
-        #     self.test = False
-        # else:
-        #     self.test = True if (ep % self.test_each == 0) else False

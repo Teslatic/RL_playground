@@ -1,0 +1,72 @@
+###############################################################################
+# Hyperparameter settings
+###############################################################################
+
+# Agent hyperparameters
+hyperparameters = {
+                    'D_ACTION': 25,  # Standard 25
+                    'GAMMA': 0.9,  # Standard 0.9
+                    }
+
+# Test parameters (for showing the agent's progress)
+test_parameters = {
+                    'TEST_EPISODES': 20, # Standard: 20
+                    'TEST_TIMESTEPS': 500, # Standard: 500
+                    'RENDER_TEST': None # Standard: None / 10
+                    }
+
+# Epsilon parameters
+eps_parameters = {
+                    'EPSILON_TYPE': 'linear',  # Not used yet
+                    'CONST_DECAY': 0.0,
+                    'EPSILON': 1, # Standard: 1
+                    'EPSILON_MIN': 0.1, # Standard: 0.1
+                    'EPSILON_INIT': 0.3,
+                    'EPS_DECAY_RATE': 0.00005,  # 0.00001 (if stepwise) 0.002 (if episodic)
+                    }
+
+# Training parameters
+train_parameters = {
+                    'EXPERIMENT_ROOT_DIR': exp_root_dir,
+                    'ACTUAL_DIR': exp_root_dir,
+                    'DESCRIPTION': description,
+                    'TRAINING_EPISODES': 200,  # Standard: 200
+                    'TRAINING_TIMESTEPS': 200,  # Standard: 200
+                    'BATCH_SIZE': 32,  # Standard: 32
+                    'MEMORY_SIZE': 40000,  # Standard: TRAINING_EPISODES*TRAINING_TIMESTEPS*N (with N~1...5)
+                    'AUTO_SAVER': 50,
+                    'SHOW_PROGRESS': None,
+                    'STORE_PROGRESS': 10,
+                    'TRAINING_FILE': "parameters/network.h5",
+                    'TEST_EACH': 5, # Standard: 10
+                    'EPSILON_PARAM': eps_parameters,
+                    'TEST_PARAMETERS': test_parameters
+                    }
+
+# Model file
+model = {
+        'MODEL_TYPE': 'DQN',
+        'WEIGHT_FILE_IN': None,
+        'WEIGHT_FILE_OUT': "estimator.h5",
+        'LOAD_EXISTING_MODEL': False,
+        'ACTIVATION': 'relu',
+        'LOSS': 'mse',
+        'OPTIMIZER': 'Nadam',
+        'LEARNING_RATE': 0.001, # Like Lior's code
+        }
+
+
+###############################################################################
+# Parameter sweeps
+###############################################################################
+
+sweeps =    {
+            'N_runs': 5,
+            'BATCH_SIZE': [8, 16, 32, 64, 256],
+            # 'BATCH_SIZE': [8, 16],
+            'GAMMA': [0, .2, .4, .6, .8, .9, 1],
+            'LEARNING_RATE': [1., .1, .01, .001, .0001],
+            'OPTIMIZER': ['Adam','Nadam','SGD', 'RMSprop'],
+            'REWARD_FNC': ['Vanilla', 'Heuristic1', 'Heuristic2'],
+            'TAU': [1, 10, 50, 100, 200, 1000]
+            }

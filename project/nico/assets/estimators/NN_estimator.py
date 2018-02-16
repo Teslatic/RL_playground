@@ -54,7 +54,7 @@ class NN_estimator():
         model.add(Dense(32, activation = activation))
         model.add(Dense(D_out, activation = 'linear'))
         model.compile(loss = loss, optimizer = optimizer(lr = learning_rate))
-        model.summary() # Prints out a short summary of the architecture
+        # model.summary() # Prints out a short summary of the architecture
         return model
         # Dropout prevents overfitting # self.model.add(Dropout(0.5))
 
