@@ -172,7 +172,7 @@ class Plotter():
         # create_plot_test_mean_std
 
         plt.figure()
-        x_data = test_each*np.arange(len(mean_vector)+1)  # +1
+        x_data = test_each*(np.arange(len(mean_vector))+1)  # +1
         for run in range(len(multiReport)):
             plt.plot(x_data, test_reports[run], label = 'run {}'.format(run))
         plt.plot(x_data, mean_vector, label ='mean reward')
