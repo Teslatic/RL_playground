@@ -7,7 +7,7 @@ from assets.helperFunctions.timestamps import print_timestamp
 from assets.memory.memory import TransitionBuffer
 from assets.policies.policies import make_epsilon_greedy_policy
 from assets.helperFunctions.discretize import discretize
-from assets.reports.Report import TrainingReport
+# from assets.reports.Report import TrainingReport
 from assets.plotter.DankPlotters import Plotter
 # from assets.helperFunctions.FileManager import
 import assets.helperFunctions.FileManager as fm
@@ -98,7 +98,7 @@ class RL_Agent():
         self.memory = TransitionBuffer(self.memory_size, self.memory_depth)
         self.memory.reset_memory()
         # Initialize report objects
-        self.report = TrainingReport(self.training_episodes)
+        # self.report = TrainingReport(self.training_episodes)
         self.reward_list = []  # Has to be a report
         self.average_reward_list = []
         self.timestep_counter = 0

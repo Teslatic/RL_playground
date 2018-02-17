@@ -128,7 +128,7 @@ sweeps =    {
             'OPTIMIZER': ['Adam','Nadam','SGD', 'RMSprop'],
             'REWARD_FNC': ['Heuristic1', 'Heuristic2', 'Vanilla'],
             # 'TAU': [1, 10, 50, 100, 200, 1000]
-            'TAU': [200, 100, 50, 10, 1]
+            'TAU': [1000, 200, 100, 50, 10, 1]
             }
 
 ###############################################################################
@@ -138,37 +138,25 @@ sweeps =    {
 env = PendulumEnv()  # Create some environments
 dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
 
+sweep = 'BATCH_SIZE'
+# sweep = 'GAMMA'
+# sweep = 'LEARNING_RATE'
+# sweep = 'OPTIMIZER'
+# sweep = 'REWARD_FNC'
+# sweep = 'TAU'
+
+dankAgent.parameter_sweep(sweep, sweeps[sweep], train_parameters, sweeps['N_runs'])
+
 ###############################################################################
 # SWEEPS
 ###############################################################################
-
-# BATCH_SIZE
-# dankAgent.parameter_sweep('BATCH_SIZE', sweeps['BATCH_SIZE'], train_parameters, sweeps['N_runs'])
-
-# OPTIMIZER
-# dankAgent.parameter_sweep('OPTIMIZER', sweeps['OPTIMIZER'], train_parameters, sweeps['N_runs'])
-
-# GAMMA
-# dankAgent.parameter_sweep('GAMMA', sweeps['GAMMA'], train_parameters, sweeps['N_runs'])
-
-# TAU
-dankAgent.parameter_sweep('TAU', sweeps['TAU'], train_parameters, sweeps['N_runs'])
-
-# LEARNING_RATE
-# dankAgent.parameter_sweep('LEARNING_RATE', sweeps['LEARNING_RATE'], train_parameters, sweeps['N_runs'])
-
-# REWARD_FNC
-# dankAgent.parameter_sweep('REWARD_FNC', sweeps['REWARD_FNC'], train_parameters, sweeps['N_runs'])
-
-# read_sR = pickle.load(open('{}/report/sweepReport.p'.format(exp_root_dir), 'rb'))
-# plotter = Plotter('notused')
-
-
-
+dankAgent.parameter_sweep(sweep, sweeps[sweep], train_parameters, sweeps['N_runs'])
 
 ###############################################################################
 # Code dumpster
 ###############################################################################
+# read_sR = pickle.load(open('{}/report/sweepReport.p'.format(exp_root_dir), 'rb'))
+# plotter = Plotter('notused')
 
 # Start a training session with a given training parameters (e.g.)
 # training_report, test_report = dankAgent.learn(train_parameters)
