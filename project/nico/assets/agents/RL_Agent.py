@@ -92,6 +92,7 @@ class RL_Agent():
         self.store = False  # indicates if progress has to be stored
         self.test = False  # indicates if testrun has to be started
         self.update = False  # indicates if model has to be updated
+        self.update_target = False
         # Initialize memory
         self.memory_depth = 8  # magic: 2xD_state = 6 + action, reward
         self.memory = TransitionBuffer(self.memory_size, self.memory_depth)
@@ -100,6 +101,7 @@ class RL_Agent():
         self.report = TrainingReport(self.training_episodes)
         self.reward_list = []  # Has to be a report
         self.average_reward_list = []
+        self.timestep_counter = 0
 
     def _unzip_training_parameters(self, training_parameters):
         self.exp_root_dir = training_parameters['EXPERIMENT_ROOT_DIR']
@@ -109,11 +111,13 @@ class RL_Agent():
         self.batch_size = training_parameters['BATCH_SIZE']
         self.memory_size = training_parameters['MEMORY_SIZE']
         self.auto_saver = training_parameters['AUTO_SAVER']
+        self.reward_fnc = training_parameters['REWARD_FNC']
 
         self.show_progress = training_parameters['SHOW_PROGRESS']
         self.store_progress = training_parameters['STORE_PROGRESS']
         self.test_each = training_parameters['TEST_EACH']
         self.weights_file = training_parameters['TRAINING_FILE']
+        self.update_target_every = training_parameters['TAU']
 
         # Epsilon: Maybe new class for epsilon handling
         self.epsilon_parameters = training_parameters['EPSILON_PARAM']
@@ -125,6 +129,7 @@ class RL_Agent():
 
         # test parameters
         self.test_parameters = training_parameters['TEST_PARAMETERS']
+
 
     def _initialize_test(self, test_parameters):
 
@@ -176,16 +181,9 @@ class RL_Agent():
         return False if (ep < min_limit) else True
 
     def _analyze_episode(self, ep):
-        # self.episode_stats.reward[ep] = self.episode_reward
-        # self.episode_stats.length[ep] = ep
-        # This will be handled witha report object
         self.reward_list.append(self.episode_reward)
 
     def _analyze_test_episode(self, ep):
-        # self.episode_stats.reward[ep] = self.episode_reward
-        # self.episode_stats.length[ep] = ep
-        # This will be handled witha report object
-        # self.report.add2testreport(ep, self.test_timesteps, self.episode_reward)
         self.reward_list_test.append(self.episode_reward)
 
     def _decrease_epsilon(self):
@@ -208,8 +206,9 @@ class RL_Agent():
         self.episode_reward += self.reward
         trans = self.memory.create_transition(self.state, self.action, self.reward, self.next_state)
         self.memory.store(trans)
-        #  self.episode_history.append((self.next_state, self.action, self.reward))
         self.state = self.next_state
+        self.timestep_counter += 1
+        self.update_target = self.set_flag_every(self.update_target_every, self.timestep_counter)
 
     def _analyze_test_timestep(self):
         """

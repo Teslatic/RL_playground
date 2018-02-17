@@ -90,13 +90,15 @@ train_parameters = {
                     'TRAINING_TIMESTEPS': 200,  # Standard: 200
                     'BATCH_SIZE': 32,  # Standard: 32
                     'MEMORY_SIZE': 40000,  # Standard: TRAINING_EPISODES*TRAINING_TIMESTEPS*N (with N~1...5)
+                    'TAU': 200, # Standard: 200 (Update target model every 200 steps = every episode)
                     'AUTO_SAVER': 50,
                     'SHOW_PROGRESS': None,
                     'STORE_PROGRESS': 10,
                     'TRAINING_FILE': "parameters/network.h5",
                     'TEST_EACH': 5, # Standard: 10
                     'EPSILON_PARAM': eps_parameters,
-                    'TEST_PARAMETERS': test_parameters
+                    'TEST_PARAMETERS': test_parameters,
+                    'REWARD_FNC': 'Vanilla'
                     }
 
 # Model file
@@ -120,11 +122,13 @@ sweeps =    {
             'N_runs': 5,
             'BATCH_SIZE': [8, 16, 32, 64, 256],
             # 'BATCH_SIZE': [8, 16],
-            'GAMMA': [0, .2, .4, .6, .8, .9, 1],
+            # 'GAMMA': [0, .2, .4, .6, .8, .9, 1],
+            'GAMMA': [.1, .3, .5, .7],
             'LEARNING_RATE': [1., .1, .01, .001, .0001],
             'OPTIMIZER': ['Adam','Nadam','SGD', 'RMSprop'],
-            'REWARD_FNC': ['Vanilla', 'Heuristic1', 'Heuristic2'],
-            'TAU': [1, 10, 50, 100, 200, 1000]
+            'REWARD_FNC': ['Heuristic1', 'Heuristic2', 'Vanilla'],
+            # 'TAU': [1, 10, 50, 100, 200, 1000]
+            'TAU': [200, 100, 50, 10, 1]
             }
 
 ###############################################################################
@@ -137,6 +141,7 @@ dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
 ###############################################################################
 # SWEEPS
 ###############################################################################
+
 # BATCH_SIZE
 # dankAgent.parameter_sweep('BATCH_SIZE', sweeps['BATCH_SIZE'], train_parameters, sweeps['N_runs'])
 
@@ -144,15 +149,16 @@ dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
 # dankAgent.parameter_sweep('OPTIMIZER', sweeps['OPTIMIZER'], train_parameters, sweeps['N_runs'])
 
 # GAMMA
-dankAgent.parameter_sweep('GAMMA', sweeps['GAMMA'], train_parameters, sweeps['N_runs'])
+# dankAgent.parameter_sweep('GAMMA', sweeps['GAMMA'], train_parameters, sweeps['N_runs'])
 
 # TAU
-# dankAgent.parameter_sweep('TAU', sweeps['TAU'], train_parameters, sweeps['N_runs'])
+dankAgent.parameter_sweep('TAU', sweeps['TAU'], train_parameters, sweeps['N_runs'])
 
 # LEARNING_RATE
 # dankAgent.parameter_sweep('LEARNING_RATE', sweeps['LEARNING_RATE'], train_parameters, sweeps['N_runs'])
 
-
+# REWARD_FNC
+# dankAgent.parameter_sweep('REWARD_FNC', sweeps['REWARD_FNC'], train_parameters, sweeps['N_runs'])
 
 # read_sR = pickle.load(open('{}/report/sweepReport.p'.format(exp_root_dir), 'rb'))
 # plotter = Plotter('notused')

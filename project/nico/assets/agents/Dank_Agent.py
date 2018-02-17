@@ -80,21 +80,26 @@ class Dank_Agent(_DQN_Agent):
                 self._initialize_timestep() # Just render
                 self.Q = self.estimator.predict(self.state)
                 self.action = epsilon_greedy(self.Q, self.epsilon, self.action_space)
-                self.next_state, self.reward, done = self._act(self.action, True)
+                if self.reward_fnc is 'Vanilla':
+                    self.next_state, self.reward, done = self._act(self.action, True)
+                elif self.reward_fnc is 'Heuristic1':
+                    self.next_state, self.reward, done = self._act(self.action, False)
                 self._analyze_timestep()
                 if self.update:
                     self.update_on_batch(self.memory.get_batch(self.batch_size))
+                if self.update_target:
+                    self.update_target_model()
+                    # print_timestamp('Updated the target model')
+                    self.timestep_counter = 0
                 if done:
                     break
                 self._decrease_epsilon()
             self._analyze_episode(ep)
             print_timestamp("Episode {}/{}\t| Reward: {}\t| epsilon: {:.2f}\t".format((ep+1), self.training_episodes, self.episode_reward, self.epsilon))
 
-            if self.update:
-                self.update_target_model()
-
             if self.test:
                 test_report = self.run_test(self.test_parameters)
+
                 average_reward = test_report[1].round(2)  # dictionary
                 self.average_reward_list.append(average_reward)
                 print_timestamp('Test ended with average reward: {}'.format(average_reward))
@@ -151,16 +156,13 @@ class Dank_Agent(_DQN_Agent):
         # Perform N runs
         for run in range(N_runs):
             self._reset_agent()  # reset agent models
-            # train_parameters['ACTUAL_DIR'] = '{}/run{}'.format(actual_dir, run)
             print_timestamp('Starting run {}'.format(run))
             training_report, test_report = self.learn(train_parameters, run)
-            # self.plotter.plot_training(actual_dir, training_report, run)
-            # self.plotter.plot_test(actual_dir, test_report, run, self.test_each)
             multireport.append([training_report, test_report, self.test_each])
-        # Create plot...
 
-        # ... and save the report file
+        # Save the report file...
         pickle.dump(multireport, open('{}/report/multiReport.p'.format(actual_dir), 'wb'))
+        # ... and create plot
         self.plotter.plot_test_multireport(multireport, actual_dir, 'multireport_test')
         self.plotter.plot_training_multireport(multireport, actual_dir, 'multireport_training')
         return multireport
@@ -179,13 +181,12 @@ class Dank_Agent(_DQN_Agent):
         """
         # Create directories...
         actual_dir = train_parameters['ACTUAL_DIR']
-
         fm.create_report_dir(actual_dir)
         fm.create_plots_dir(actual_dir)
         # ... and report object
         sweepingReport = {}
 
-
+        # Write into description-file
         description = train_parameters['DESCRIPTION']
         descriptionfile = open('{}/description.txt'.format(actual_dir),"w")
         descriptionfile.write(description)
@@ -202,10 +203,9 @@ class Dank_Agent(_DQN_Agent):
             multiReport = self.run_n_learning_sessions(N_runs, train_parameters)
             # Add multiReport to the sweepingReport
             sweepingReport.update({sweep_parameter: multiReport})
-        # Create plot...
-
-        # ... and save the report file
+        # Save the report file...
         pickle.dump(sweepingReport, open('{}/report/sweepReport.p'.format(actual_dir), 'wb'))
+        # ... and create plot
         return sweepingReport
 
 
