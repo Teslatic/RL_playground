@@ -1,6 +1,5 @@
 # from os import path
 import numpy as np
-import random
 # import pickle
 # if "../" not in sys.path:
 #     sys.path.append("../")
@@ -151,7 +150,6 @@ class RL_Agent():
         Every show_progress_each steps the render flag is set to true.
         Every save_weights_each steps the save flag is set to true.
         """
-        self.env.seed(random.randint(1, 10000))  # For random test data
         self.state = self.env.reset()
         self.episode_reward = 0
         self.episode_history = []  # Clearing the history
