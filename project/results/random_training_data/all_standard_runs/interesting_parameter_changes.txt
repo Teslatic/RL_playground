@@ -1,0 +1,8 @@
+Gamma: 0.8
+Optimizer: SGD
+Batch Size: -
+Learning Rate: -
+Reward Function: -
+TAU: 10
+
+
