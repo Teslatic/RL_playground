@@ -47,7 +47,6 @@ class RL_Agent():
     def _unzip_hyperparameters(self, hyperparameters):
         """Unzips the hyperparameter set and writes it into single variables"""
         self.D_action = hyperparameters['D_ACTION']
-        self.gamma = hyperparameters['GAMMA']
 
 ###############################################################################
 # General layout of an RL task
@@ -113,6 +112,7 @@ class RL_Agent():
         self.memory_size = training_parameters['MEMORY_SIZE']
         self.auto_saver = training_parameters['AUTO_SAVER']
         self.reward_fnc = training_parameters['REWARD_FNC']
+        self.gamma = training_parameters['GAMMA']
 
         self.show_progress = training_parameters['SHOW_PROGRESS']
         self.store_progress = training_parameters['STORE_PROGRESS']

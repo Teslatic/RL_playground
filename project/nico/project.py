@@ -61,7 +61,6 @@ exp_root_dir = create_free_path(all_exp_path, experiment_name)
 # Agent hyperparameters
 hyperparameters = {
                     'D_ACTION': 25,  # Standard 25
-                    'GAMMA': 0.9,  # Standard 0.9
                     }
 
 # Test parameters (for showing the agent's progress)
@@ -88,6 +87,7 @@ train_parameters = {
                     'DESCRIPTION': description,
                     'TRAINING_EPISODES': 200,  # Standard: 200
                     'TRAINING_TIMESTEPS': 200,  # Standard: 200
+                    'GAMMA': 0.8,  # Standard 0.9
                     'BATCH_SIZE': 32,  # Standard: 32
                     'MEMORY_SIZE': 40000,  # Standard: TRAINING_EPISODES*TRAINING_TIMESTEPS*N (with N~1...5)
                     'TAU': 200, # Standard: 200 (Update target model every 200 steps = every episode)
@@ -119,16 +119,17 @@ model = {
 ###############################################################################
 
 sweeps =    {
-            'N_runs': 5,
+            'N_runs': 35,
             'BATCH_SIZE': [8, 16, 32, 64, 256],
             # 'BATCH_SIZE': [8, 16],
-            # 'GAMMA': [0, .2, .4, .6, .8, .9, 1],
-            'GAMMA': [.1, .3, .5, .7],
+            # 'GAMMA': [.9],
+            'GAMMA': [0, .2, .4, .6, .8, .9, 1],
+            # 'GAMMA': [.1, .3, .5, .7],
             'LEARNING_RATE': [1., .1, .01, .001, .0001],
             'OPTIMIZER': ['Adam','Nadam','SGD', 'RMSprop'],
             'REWARD_FNC': ['Heuristic1', 'Heuristic2', 'Vanilla'],
             # 'TAU': [1, 10, 50, 100, 200, 1000]
-            'TAU': [1000, 200, 100, 50, 10, 1]
+            'TAU': [10]
             }
 
 ###############################################################################
@@ -138,14 +139,12 @@ sweeps =    {
 env = PendulumEnv()  # Create some environments
 dankAgent = Dank_Agent(env, hyperparameters, model)  # Create some agents
 
-sweep = 'BATCH_SIZE'
+# sweep = 'BATCH_SIZE'
 # sweep = 'GAMMA'
 # sweep = 'LEARNING_RATE'
 # sweep = 'OPTIMIZER'
 # sweep = 'REWARD_FNC'
-# sweep = 'TAU'
-
-dankAgent.parameter_sweep(sweep, sweeps[sweep], train_parameters, sweeps['N_runs'])
+sweep = 'GAMMA'
 
 ###############################################################################
 # SWEEPS

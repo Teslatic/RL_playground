@@ -13,7 +13,7 @@ from collections import defaultdict, namedtuple
 
 import keras
 from keras.models import Sequential
-from keras.optimizers import Adam, Nadam, RMSprop
+from keras.optimizers import Adam, Nadam, RMSprop, SGD
 from keras import backend as K
 from keras.layers import Flatten,Dense, Dropout
 
@@ -70,6 +70,8 @@ class NN_estimator():
             optimizer = Nadam
         elif architecture["OPTIMIZER"] == 'RMSprop':
             optimizer = RMSprop
+        elif architecture["OPTIMIZER"] == 'SGD':
+            optimizer = SGD
         learning_rate = architecture["LEARNING_RATE"]
         return D_in, D_out, action_space, activation, loss, optimizer, learning_rate
 
